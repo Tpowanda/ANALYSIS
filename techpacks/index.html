@@ -1,0 +1,2832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClothingQuote — Techpack Creator</title>
+<style>
+/* ═══════════════════════════════════════
+   CSS VARIABLES (DARK THEME — PDF MATCH)
+   ═══════════════════════════════════════ */
+:root {
+  --bg-primary: #0F1117;
+  --bg-surface: #1A1D27;
+  --bg-surface-alt: #1E2230;
+  --bg-input: #252836;
+  --bg-hover: #2A2E3F;
+  --text-primary: #F0F0F5;
+  --text-secondary: #A0A3B1;
+  --text-label: #C8CAD4;
+  --accent: #4A9EFF;
+  --accent-hover: #6BB3FF;
+  --accent-dim: rgba(74,158,255,0.12);
+  --border: #2E3140;
+  --border-focus: #4A9EFF;
+  --error: #FF6B6B;
+  --error-bg: rgba(255,107,107,0.08);
+  --success: #4ADE80;
+  --success-bg: rgba(74,222,128,0.08);
+  --warning: #FBBF24;
+  --warning-bg: rgba(251,191,36,0.08);
+  --radius: 8px;
+  --radius-lg: 12px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.3);
+  --font-body: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  --transition: 0.2s ease;
+  /* Letter callout colors */
+  --letter-A: #FFCC00;
+  --letter-B: #5AB9DC;
+  --letter-C: #4ADE80;
+  --letter-D: #A855F7;
+  --letter-E: #EF4444;
+  --letter-F: #FB923C;
+  --letter-G: #F97316;
+  --letter-H: #FFFFFF;
+  --letter-I: #EC4899;
+  --letter-J: #9CA3AF;
+}
+
+/* ═══════════════════════════
+   RESET & BASE
+   ═══════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+.skip-link {
+  position: absolute; top: -100%; left: 1rem;
+  background: var(--accent); color: #000;
+  padding: 0.75rem 1.5rem; border-radius: var(--radius);
+  font-weight: 600; z-index: 9999; text-decoration: none;
+}
+.skip-link:focus { top: 1rem; }
+
+/* ═══════════════════════════
+   HEADER
+   ═══════════════════════════ */
+.app-header {
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.app-header h1 {
+  font-size: 1.05rem; font-weight: 700;
+  letter-spacing: -0.02em;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.app-header h1 .logo-mark {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.85rem; height: 1.85rem;
+  background: var(--accent); color: #000;
+  border-radius: 6px; font-weight: 800; font-size: 0.8rem;
+}
+.header-actions { display: flex; gap: 0.6rem; }
+
+/* ═══════════════════════════
+   TAB NAVIGATION
+   ═══════════════════════════ */
+.tab-nav {
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.tab-nav::-webkit-scrollbar { height: 3px; }
+.tab-nav::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.tab-list { display: flex; gap: 0; list-style: none; min-width: max-content; }
+.tab-list [role="tab"] {
+  background: none; border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.82rem; font-weight: 500;
+  padding: 0.85rem 1rem;
+  cursor: pointer; white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: color var(--transition), border-color var(--transition);
+}
+.tab-list [role="tab"]:hover { color: var(--text-primary); }
+.tab-list [role="tab"][aria-selected="true"] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+.tab-list [role="tab"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px; border-radius: 4px;
+}
+.tab-list [role="tab"] .tab-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.25rem; height: 1.25rem;
+  font-size: 0.7rem; border-radius: 50%;
+  background: var(--bg-input);
+  margin-right: 0.4rem; font-weight: 700;
+}
+.tab-list [role="tab"][aria-selected="true"] .tab-num {
+  background: var(--accent); color: #000;
+}
+
+/* ═══════════════════════════
+   MAIN CONTENT
+   ═══════════════════════════ */
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 2rem 4rem 2rem;
+}
+.tab-panel { display: none; animation: fadeIn 0.25s ease; }
+.tab-panel.active { display: block; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Section header layout (matches PDF — title left, control widget right) */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.section-header-text { flex: 1; }
+.section-header h2 {
+  font-size: 1.5rem; font-weight: 700;
+  letter-spacing: -0.01em; margin-bottom: 0.25rem;
+}
+.section-header p {
+  color: var(--text-secondary); font-size: 0.85rem;
+}
+
+/* ═══════════════════════════
+   FORMS
+   ═══════════════════════════ */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.form-grid .full-width { grid-column: 1 / -1; }
+.form-group { display: flex; flex-direction: column; gap: 0.35rem; }
+.form-group label {
+  font-size: 0.75rem; font-weight: 600;
+  color: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.form-group label .required { color: var(--error); margin-left: 2px; }
+
+input[type="text"], input[type="number"], input[type="date"],
+input[type="url"], input[type="file"], select, textarea {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  padding: 0.6rem 0.8rem;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  width: 100%;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+input[type="file"] { padding: 0.45rem; cursor: pointer; }
+textarea { min-height: 70px; resize: vertical; }
+select {
+  cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23A0A3B1' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2rem;
+}
+::placeholder { color: #5C6072; opacity: 0.7; }
+
+.checkbox-group, .radio-group {
+  display: flex; flex-wrap: wrap; gap: 0.5rem;
+}
+.checkbox-group label, .radio-group label {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-size: 0.82rem; font-weight: 500;
+  text-transform: none; letter-spacing: 0;
+  color: var(--text-primary); cursor: pointer;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  transition: all var(--transition);
+}
+.checkbox-group label:hover, .radio-group label:hover { background: var(--bg-hover); }
+.checkbox-group label:has(input:checked),
+.radio-group label:has(input:checked) {
+  border-color: var(--accent); background: var(--accent-dim);
+}
+.checkbox-group input, .radio-group input {
+  accent-color: var(--accent); width: 1rem; height: 1rem;
+}
+
+/* ═══════════════════════════
+   BUTTONS
+   ═══════════════════════════ */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 0.4rem; padding: 0.55rem 1.1rem;
+  border: none; border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: 0.82rem; font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn-primary { background: var(--accent); color: #000; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-secondary {
+  background: var(--bg-input); color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--bg-hover); }
+.btn-danger {
+  background: var(--error-bg); color: var(--error);
+  border: 1px solid rgba(255,107,107,0.2);
+}
+.btn-danger:hover { background: rgba(255,107,107,0.15); }
+.btn-sm { padding: 0.4rem 0.8rem; font-size: 0.78rem; }
+.btn-icon {
+  width: 1.85rem; height: 1.85rem; padding: 0;
+  border-radius: 6px; font-size: 1rem;
+}
+
+/* ═══════════════════════════
+   CARDS
+   ═══════════════════════════ */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+.card-header h3 { font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
+
+/* ═══════════════════════════
+   LETTER CALLOUTS (A-J)
+   ═══════════════════════════ */
+.callout-toolbox {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  min-width: 350px;
+  max-width: 420px;
+}
+.callout-toolbox-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.callout-toolbox h4 {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+.callout-instructions {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-bottom: 0.5rem;
+}
+.callout-instructions strong { color: var(--text-primary); }
+.letter-row {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+.letter-circle {
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: #000;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all var(--transition);
+  user-select: none;
+  position: relative;
+}
+.letter-circle:hover { transform: scale(1.1); }
+.letter-circle.active {
+  border-color: #fff;
+  box-shadow: 0 0 0 3px var(--accent), 0 0 12px var(--accent);
+  transform: scale(1.15);
+}
+.letter-circle.used::after {
+  content: '✓';
+  position: absolute;
+  top: -4px; right: -4px;
+  width: 14px; height: 14px;
+  background: var(--success);
+  color: #000;
+  font-size: 9px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+}
+.lc-A { background: var(--letter-A); }
+.lc-B { background: var(--letter-B); }
+.lc-C { background: var(--letter-C); }
+.lc-D { background: var(--letter-D); color: #fff; }
+.lc-E { background: var(--letter-E); color: #fff; }
+.lc-F { background: var(--letter-F); }
+.lc-G { background: var(--letter-G); color: #fff; }
+.lc-H { background: var(--letter-H); border: 1px solid #ccc; }
+.lc-I { background: var(--letter-I); color: #fff; }
+.lc-J { background: var(--letter-J); color: #fff; }
+
+/* ═══════════════════════════
+   PLACEMENT ZONES (Front/Back)
+   ═══════════════════════════ */
+.placement-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.placement-zone {
+  position: relative;
+  background: var(--bg-surface);
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-lg);
+  min-height: 320px;
+  padding: 0.85rem;
+  cursor: crosshair;
+  transition: border-color var(--transition);
+  overflow: hidden;
+}
+.placement-zone.active-targeting {
+  border-color: var(--accent);
+  background: rgba(74,158,255,0.04);
+}
+.placement-zone-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-label);
+  margin-bottom: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.placement-zone-label .required { color: var(--error); }
+.placement-zone .upload-trigger {
+  font-size: 0.7rem;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.placement-zone img.zone-image {
+  position: absolute;
+  top: 2.5rem; left: 0.85rem; right: 0.85rem; bottom: 0.85rem;
+  width: calc(100% - 1.7rem);
+  height: calc(100% - 3.35rem);
+  object-fit: contain;
+  pointer-events: none;
+}
+.placement-zone-empty {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-style: italic;
+  pointer-events: none;
+}
+.callout-marker {
+  position: absolute;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  border: 2px solid #000;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  cursor: move;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  user-select: none;
+}
+.callout-marker:hover {
+  transform: translate(-50%, -50%) scale(1.15);
+}
+.marker-A { background: var(--letter-A); color: #000; }
+.marker-B { background: var(--letter-B); color: #000; }
+.marker-C { background: var(--letter-C); color: #000; }
+.marker-D { background: var(--letter-D); color: #fff; }
+.marker-E { background: var(--letter-E); color: #fff; }
+.marker-F { background: var(--letter-F); color: #000; }
+.marker-G { background: var(--letter-G); color: #fff; }
+.marker-H { background: var(--letter-H); color: #000; }
+.marker-I { background: var(--letter-I); color: #fff; }
+.marker-J { background: var(--letter-J); color: #fff; }
+
+/* ═══════════════════════════
+   COLORWAY CARDS (PDF style)
+   ═══════════════════════════ */
+.colorway-block {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  position: relative;
+}
+.colorway-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+.colorway-header h4 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.colorway-flat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+.flat-upload-zone {
+  background: var(--bg-input);
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  min-height: 200px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.flat-upload-zone label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-label);
+  margin-bottom: 0.4rem;
+}
+.flat-upload-zone input[type="file"] {
+  font-size: 0.75rem;
+  padding: 0.3rem;
+}
+.flat-upload-zone .preview-thumb {
+  margin-top: 0.5rem;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.flat-upload-zone .preview-thumb img {
+  max-width: 100%;
+  max-height: 160px;
+  object-fit: contain;
+}
+.colorway-name-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+/* Color mapping table per colorway (used in Sewing/Construction/Hardware tabs) */
+.color-map-table {
+  margin-top: 1rem;
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+}
+.color-map-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 1fr;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.color-map-row:last-child { border-bottom: none; }
+.color-map-row .cw-name-cell {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-label);
+}
+.color-map-row input {
+  font-size: 0.8rem;
+  padding: 0.4rem 0.6rem;
+}
+.color-map-row .letter-mini {
+  display: inline-flex;
+  width: 1.2rem; height: 1.2rem;
+  border-radius: 50%;
+  font-size: 0.65rem;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+}
+.color-map-header {
+  display: grid;
+  grid-template-columns: 140px 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+}
+
+/* Size pack / Size scale (matches PDF top right) */
+.size-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.size-pack-block { display: flex; flex-direction: column; gap: 0.4rem; }
+.size-pack-block .label-tiny {
+  font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-label);
+}
+.size-pack-block .label-tiny .required { color: var(--error); }
+.size-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 0.3rem;
+}
+.size-cell {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.35rem 0.25rem;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition);
+  user-select: none;
+}
+.size-cell:hover { background: var(--bg-hover); }
+.size-cell.selected {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+}
+.size-scale-input {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.35rem 0.25rem;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  width: 100%;
+  color: var(--text-primary);
+}
+.size-scale-input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ═══════════════════════════
+   REPEATING ROWS
+   ═══════════════════════════ */
+.repeating-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-end;
+  padding: 0.65rem;
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+.repeating-row .form-group { flex: 1; min-width: 130px; }
+.repeating-row .btn-remove { flex-shrink: 0; align-self: flex-end; margin-bottom: 2px; }
+
+/* Callout entry card (sewing/construction/hardware) */
+.callout-entry {
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem;
+  margin-bottom: 0.75rem;
+  position: relative;
+}
+.callout-entry-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+.callout-entry-letter {
+  display: inline-flex;
+  width: 1.85rem; height: 1.85rem;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  margin-right: 0.5rem;
+}
+
+/* ═══════════════════════════
+   DATA TABLE (FIT MEASUREMENTS)
+   ═══════════════════════════ */
+.data-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+.data-table th, .data-table td {
+  padding: 0.5rem 0.6rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.data-table th {
+  background: var(--bg-surface-alt);
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+}
+.data-table td input {
+  background: var(--bg-input);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  padding: 0.3rem 0.4rem;
+  width: 100%;
+  min-width: 55px;
+  text-align: center;
+}
+.data-table td input:focus {
+  border-color: var(--border-focus);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-dim);
+}
+.data-table td:first-child {
+  font-weight: 600;
+  color: var(--text-label);
+  white-space: nowrap;
+  min-width: 200px;
+  background: var(--bg-surface);
+  font-size: 0.78rem;
+}
+
+/* ═══════════════════════════
+   TRIM PACKAGE
+   ═══════════════════════════ */
+.trim-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.trim-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+.trim-card-header .badge {
+  padding: 0.2rem 0.6rem;
+  background: var(--bg-input);
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.trim-card-header h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+/* ═══════════════════════════
+   REVIEW
+   ═══════════════════════════ */
+.review-section { margin-bottom: 1.5rem; }
+.review-section h3 {
+  font-size: 1rem; font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+.review-row {
+  display: flex;
+  padding: 0.35rem 0;
+  font-size: 0.85rem;
+  gap: 1rem;
+}
+.review-row .review-label {
+  width: 220px;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.review-row .review-value { color: var(--text-primary); flex: 1; }
+.review-empty { color: var(--text-secondary); font-style: italic; opacity: 0.6; }
+
+/* ═══════════════════════════
+   STATUS TOAST
+   ═══════════════════════════ */
+.status-message {
+  position: fixed;
+  bottom: 1.5rem; right: 1.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius);
+  font-size: 0.85rem; font-weight: 600;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+  z-index: 200;
+  pointer-events: none;
+  max-width: 300px;
+}
+.status-message.visible { opacity: 1; transform: translateY(0); }
+.status-message.success {
+  background: var(--success-bg); color: var(--success);
+  border: 1px solid rgba(74,222,128,0.25);
+}
+.status-message.error {
+  background: var(--error-bg); color: var(--error);
+  border: 1px solid rgba(255,107,107,0.25);
+}
+.status-message.info {
+  background: var(--accent-dim); color: var(--accent);
+  border: 1px solid rgba(74,158,255,0.25);
+}
+
+/* Active letter indicator (top of viewport when targeting) */
+.active-letter-banner {
+  position: fixed;
+  top: 4.5rem; left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 0.5rem 1rem;
+  font-size: 0.82rem;
+  display: none;
+  align-items: center;
+  gap: 0.6rem;
+  z-index: 50;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.active-letter-banner.visible { display: flex; }
+.active-letter-banner kbd {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0.1rem 0.3rem;
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+}
+
+/* ═══════════════════════════
+   WASH / DISTRESS / WARNINGS
+   ═══════════════════════════ */
+.warning-row {
+  background: var(--warning-bg);
+  border-left: 3px solid var(--warning);
+  border-radius: var(--radius);
+  padding: 0.65rem 0.85rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+.warning-row input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  padding: 0.3rem;
+}
+.warning-row input:focus {
+  background: var(--bg-input);
+  border-radius: 4px;
+}
+
+/* ═══════════════════════════
+   ART/EMBELLISHMENT TABLE
+   ═══════════════════════════ */
+.art-color-table {
+  width: 100%;
+  margin-top: 1rem;
+  border-collapse: collapse;
+}
+.art-color-table th {
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: 0.5rem 0.4rem;
+  letter-spacing: 0.04em;
+}
+.art-color-table th:first-child { width: 60px; text-align: left; }
+.art-color-table th .cw-color-name {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  margin-bottom: 0.15rem;
+}
+.art-color-table td {
+  padding: 0.3rem;
+}
+.art-color-table td:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.art-color-table input, .art-color-table select {
+  font-size: 0.78rem;
+  padding: 0.4rem 0.6rem;
+}
+
+/* ═══════════════════════════
+   PLACEMENT TABS (Front/Back/Other for Art)
+   ═══════════════════════════ */
+.art-placement-tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.art-placement-tab {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.art-placement-tab:hover { background: var(--bg-hover); }
+.art-placement-tab.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.art-placement-tab input[type="checkbox"] {
+  margin: 0;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════
+   RESPONSIVE
+   ═══════════════════════════ */
+@media (max-width: 900px) {
+  .form-grid, .placement-row, .colorway-flat-grid, .colorway-name-row {
+    grid-template-columns: 1fr;
+  }
+  .section-header { flex-direction: column; }
+  main { padding: 1rem; }
+  .app-header { padding: 0.75rem 1rem; flex-wrap: wrap; gap: 0.5rem; }
+  .tab-nav { padding: 0 1rem; }
+  .repeating-row { flex-direction: column; align-items: stretch; }
+  .color-map-row, .color-map-header { grid-template-columns: 1fr; }
+  .size-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ═══════════════════════════
+   PRINT
+   ═══════════════════════════ */
+@media print {
+  .app-header, .tab-nav, .btn, .skip-link, .status-message, .active-letter-banner { display: none !important; }
+  body { background: #fff; color: #000; }
+  .tab-panel { display: block !important; page-break-inside: avoid; margin-bottom: 2rem; }
+  .card, .colorway-block, .callout-entry, .trim-card { border: 1px solid #ccc; background: #fff; color: #000; }
+  input, select, textarea { border: 1px solid #ccc; background: #f9f9f9; color: #000; }
+  .data-table th { background: #eee; color: #333; }
+  .placement-zone { border: 1px solid #ccc; background: #fafafa; }
+}
+</style>
+</head>
+<body>
+
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<!-- ═══════════════════════════
+     HEADER
+     ═══════════════════════════ -->
+<header class="app-header" role="banner">
+  <h1>
+    <span class="logo-mark" aria-hidden="true">CQ</span>
+    ClothingQuote — Techpack Creator
+  </h1>
+  <div class="header-actions">
+    <button class="btn btn-secondary btn-sm" onclick="exportJSON()" aria-label="Export techpack data as JSON file">⬇ Export</button>
+    <button class="btn btn-primary btn-sm" onclick="window.print()" aria-label="Print techpack">🖨 Print</button>
+  </div>
+</header>
+
+<!-- ═══════════════════════════
+     TAB NAV (PDF ORDER)
+     ═══════════════════════════ -->
+<nav class="tab-nav" aria-label="Techpack sections">
+  <ul class="tab-list" role="tablist">
+    <li role="presentation"><button role="tab" id="tab-1" aria-selected="true" aria-controls="panel-1" onclick="switchTab(0)"><span class="tab-num">1</span>Design Overview</button></li>
+    <li role="presentation"><button role="tab" id="tab-2" aria-selected="false" aria-controls="panel-2" onclick="switchTab(1)"><span class="tab-num">2</span>Construction</button></li>
+    <li role="presentation"><button role="tab" id="tab-3" aria-selected="false" aria-controls="panel-3" onclick="switchTab(2)"><span class="tab-num">3</span>Sewing Callouts</button></li>
+    <li role="presentation"><button role="tab" id="tab-4" aria-selected="false" aria-controls="panel-4" onclick="switchTab(3)"><span class="tab-num">4</span>Wash &amp; Finishing</button></li>
+    <li role="presentation"><button role="tab" id="tab-5" aria-selected="false" aria-controls="panel-5" onclick="switchTab(4)"><span class="tab-num">5</span>Art &amp; Embellishments (1)</button></li>
+    <li role="presentation"><button role="tab" id="tab-6" aria-selected="false" aria-controls="panel-6" onclick="switchTab(5)"><span class="tab-num">6</span>Art &amp; Embellishments (2)</button></li>
+    <li role="presentation"><button role="tab" id="tab-7" aria-selected="false" aria-controls="panel-7" onclick="switchTab(6)"><span class="tab-num">7</span>Hardware</button></li>
+    <li role="presentation"><button role="tab" id="tab-8" aria-selected="false" aria-controls="panel-8" onclick="switchTab(7)"><span class="tab-num">8</span>Trim Package</button></li>
+    <li role="presentation"><button role="tab" id="tab-9" aria-selected="false" aria-controls="panel-9" onclick="switchTab(8)"><span class="tab-num">9</span>Fit Measurements</button></li>
+    <li role="presentation"><button role="tab" id="tab-10" aria-selected="false" aria-controls="panel-10" onclick="switchTab(9)"><span class="tab-num">10</span>Review &amp; Export</button></li>
+  </ul>
+</nav>
+
+<!-- Active letter status banner -->
+<div id="active-letter-banner" class="active-letter-banner" aria-live="polite">
+  <span>Letter <strong id="alb-letter">A</strong> selected</span>
+  <span style="color:var(--text-secondary)">— Click placement zone to mark, press <kbd>Tab</kbd> for next, <kbd>Esc</kbd> to cancel</span>
+</div>
+
+<main id="main-content">
+  <div id="live-status" aria-live="polite" aria-atomic="true" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);"></div>
+
+  <!-- ═══════════════════════════════════════════
+       TAB 1: DESIGN OVERVIEW
+       ═══════════════════════════════════════════ -->
+  <section id="panel-1" class="tab-panel active" role="tabpanel" aria-labelledby="tab-1">
+    <div class="section-header">
+      <div class="section-header-text">
+        <h2>Design Overview</h2>
+        <p>The cover page of your techpack — style identity, colorways, and flat sketches.</p>
+      </div>
+      <div class="size-controls">
+        <div class="size-pack-block">
+          <span class="label-tiny">Size Range <span class="required">*</span></span>
+          <div class="size-grid" id="size-grid">
+            <div class="size-cell" data-size="XS" onclick="toggleSize(this)">XS</div>
+            <div class="size-cell selected" data-size="S" onclick="toggleSize(this)">S</div>
+            <div class="size-cell selected" data-size="M" onclick="toggleSize(this)">M</div>
+            <div class="size-cell selected" data-size="L" onclick="toggleSize(this)">L</div>
+            <div class="size-cell selected" data-size="XL" onclick="toggleSize(this)">XL</div>
+            <div class="size-cell" data-size="2X" onclick="toggleSize(this)">2X</div>
+            <div class="size-cell" data-size="3X" onclick="toggleSize(this)">3X</div>
+            <div class="size-cell" data-size="4X" onclick="toggleSize(this)">4X</div>
+          </div>
+          <span class="label-tiny" style="margin-top:0.4rem;">Size Scale <span class="required">*</span></span>
+          <div class="size-grid" id="size-scale-grid">
+            <input type="text" class="size-scale-input" data-size="XS" placeholder="—" disabled>
+            <input type="text" class="size-scale-input" data-size="S" value="1">
+            <input type="text" class="size-scale-input" data-size="M" value="2">
+            <input type="text" class="size-scale-input" data-size="L" value="2">
+            <input type="text" class="size-scale-input" data-size="XL" value="1">
+            <input type="text" class="size-scale-input" data-size="2X" placeholder="—" disabled>
+            <input type="text" class="size-scale-input" data-size="3X" placeholder="—" disabled>
+            <input type="text" class="size-scale-input" data-size="4X" placeholder="—" disabled>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="style-number">Style Number <span class="required">*</span></label>
+        <input type="text" id="style-number" placeholder="e.g. 495">
+      </div>
+      <div class="form-group">
+        <label for="brand-header">Brand Header <span class="required">*</span></label>
+        <input type="text" id="brand-header" placeholder="e.g. Hudson Outerwear">
+      </div>
+      <div class="form-group">
+        <label for="style-name">Style Name</label>
+        <input type="text" id="style-name" placeholder="e.g. 1999 Homme Hoodie">
+      </div>
+      <div class="form-group">
+        <label for="season">Season</label>
+        <select id="season">
+          <option value="">— Select Season —</option>
+          <option>SS25</option><option>FW25</option>
+          <option>SS26</option><option selected>FW26</option>
+          <option>SS27</option><option>FW27</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="garment-type">Garment Type</label>
+        <select id="garment-type" onchange="onGarmentTypeChange()">
+          <option value="">— Select Type —</option>
+          <option value="crewneck">Crewneck Sweatshirt</option>
+          <option value="hoodie">Hoodie</option>
+          <option value="jacket">Jacket</option>
+          <option value="vest">Vest</option>
+          <option value="tshirt">T-Shirt</option>
+          <option value="jogger">Jogger / Sweatpant</option>
+          <option value="shorts">Shorts</option>
+          <option value="polo">Polo</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="tech-date">Date</label>
+        <input type="date" id="tech-date">
+      </div>
+      <div class="form-group">
+        <label for="designer">Designer</label>
+        <input type="text" id="designer" placeholder="Name of designer">
+      </div>
+      <div class="form-group">
+        <label for="fit-type">Fit Type</label>
+        <select id="fit-type">
+          <option value="">— Select Fit —</option>
+          <option>Slim</option><option>Regular</option>
+          <option>Relaxed</option><option>Oversized</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- COLORWAYS (PDF style — each colorway has its own front/back sketch) -->
+    <div style="margin-top:1.25rem;">
+      <button type="button" class="btn btn-secondary" onclick="addColorway()" style="width:100%;justify-content:center;">+ Add Colorway</button>
+      <div id="colorways-container" style="margin-top:0.75rem;">
+        <!-- Colorways populated by JS -->
+      </div>
+    </div>
+
+    <div class="form-group full-width" style="margin-top:1rem;">
+      <label for="overview-notes">General Notes</label>
+      <textarea id="overview-notes" placeholder="General notes about this style..."></textarea>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       TAB 2: CONSTRUCTION
+       ═══════════════════════════════════════════ -->
+  <section id="panel-2" class="tab-panel" role="tabpanel" aria-labelledby="tab-2">
+    <div class="section-header">
+      <div class="section-header-text">
+        <h2>Construction Details</h2>
+        <p>Material specifications, fabric composition, and garment-specific construction methods.</p>
+      </div>
+      <div class="callout-toolbox">
+        <div class="callout-toolbox-header">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="addFabricCallout()">+ Add Fabric</button>
+          <h4 style="margin-left:auto;">Letter Callouts</h4>
+        </div>
+        <div class="callout-instructions">
+          <strong>1.</strong> Select letter <strong>2.</strong> Click placement zone <strong>3.</strong> Press <kbd>Tab</kbd> for next
+        </div>
+        <div class="letter-row" id="construction-letter-row" data-tab="construction"></div>
+      </div>
+    </div>
+
+    <!-- Front/Back placement zones for fabric callouts -->
+    <div class="placement-row">
+      <div class="placement-zone" data-zone="construction-front" data-side="front" onclick="placeMarkerHere(event, this)">
+        <div class="placement-zone-label">
+          <span>FRONT <span class="required">*</span></span>
+          <label class="upload-trigger">
+            Upload sketch
+            <input type="file" accept="image/*" style="display:none" onchange="uploadZoneImage(this, 'construction-front')">
+          </label>
+        </div>
+        <div class="placement-zone-empty">Click "Upload sketch" to add front view</div>
+      </div>
+      <div class="placement-zone" data-zone="construction-back" data-side="back" onclick="placeMarkerHere(event, this)">
+        <div class="placement-zone-label">
+          <span>BACK <span class="required">*</span></span>
+          <label class="upload-trigger">
+            Upload sketch
+            <input type="file" accept="image/*" style="display:none" onchange="uploadZoneImage(this, 'construction-back')">
+          </label>
+        </div>
+        <div class="placement-zone-empty">Click "Upload sketch" to add back view</div>
+      </div>
+    </div>
+
+    <!-- Primary Fabric -->
+    <div class="card">
+      <div class="card-header">
+        <h3>Primary Fabric <span class="letter-circle lc-A" style="cursor:default;">A</span></h3>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="fabric-gsm">Fabric GSM <span class="required">*</span></label>
+          <input type="number" id="fabric-gsm" placeholder="e.g. 385">
+        </div>
+        <div class="form-group">
+          <label for="fabric-type">Fabric Type <span class="required">*</span></label>
+          <select id="fabric-type">
+            <option value="">— Select —</option>
+            <option>Fleece</option><option>French Terry</option>
+            <option>Jersey</option><option>Sherpa</option>
+            <option>Polar Fleece</option><option>Nylon</option>
+            <option>Poplin</option><option>Twill</option>
+            <option>Denim</option><option>Corduroy</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group full-width">
+          <label>Fabric Composition <span class="required">*</span></label>
+          <div id="composition-container">
+            <div class="repeating-row">
+              <div class="form-group"><label>Fiber</label><input type="text" placeholder="e.g. Cotton"></div>
+              <div class="form-group" style="max-width:90px;"><label>%</label><input type="number" placeholder="95" min="0" max="100"></div>
+              <button type="button" class="btn btn-danger btn-icon btn-remove" onclick="this.closest('.repeating-row').remove()">✕</button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="addFiber()" style="margin-top:0.5rem;">+ Add Fiber</button>
+        </div>
+        <div class="form-group">
+          <label for="fabric-swatch">Fabric Swatch Photo</label>
+          <input type="file" id="fabric-swatch" accept="image/*" onchange="previewImage(this, 'swatch-preview')">
+          <div id="swatch-preview" class="image-preview"></div>
+        </div>
+        <div class="form-group">
+          <label for="ref-style">Reference Style</label>
+          <input type="text" id="ref-style" placeholder='e.g. "Same as 471"'>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ribbing (conditional — knits) -->
+    <div class="card" id="ribbing-section">
+      <div class="card-header">
+        <h3>Ribbing Specs <span class="letter-circle lc-B" style="cursor:default;">B</span></h3>
+        <span style="font-size:0.72rem;color:var(--text-secondary);">Knit garments only</span>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="rib-type">Rib Type</label>
+          <select id="rib-type">
+            <option value="">— Select —</option>
+            <option>1x1</option><option>2x2</option>
+            <option>Flat Knit</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="rib-match">Color Match</label>
+          <select id="rib-match">
+            <option>DTM (Dyed-to-Match)</option>
+            <option>Contrast</option>
+          </select>
+        </div>
+        <div class="form-group full-width">
+          <label>Rib Placement</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" name="rib-place" value="neck"><span>Neck</span></label>
+            <label><input type="checkbox" name="rib-place" value="sleeve" checked><span>Sleeve Opening</span></label>
+            <label><input type="checkbox" name="rib-place" value="bottom" checked><span>Bottom Opening</span></label>
+            <label><input type="checkbox" name="rib-place" value="cuff"><span>Cuff</span></label>
+          </div>
+        </div>
+        <div class="form-group full-width">
+          <label for="rib-notes">Ribbing Quality Notes</label>
+          <textarea id="rib-notes" placeholder='e.g. "Must be DTM, must have more stretch, must be better quality"'></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Color Map per Colorway (Construction tab — Fabric/Rib mapping) -->
+    <div id="construction-color-map" class="color-map-table"></div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       TAB 3: SEWING CALLOUTS
+       ═══════════════════════════════════════════ -->
+  <section id="panel-3" class="tab-panel" role="tabpanel" aria-labelledby="tab-3">
+    <div class="section-header">
+      <div class="section-header-text">
+        <h2>Sewing Callouts</h2>
+        <p>Detailed construction specs per seam location — stitch types, widths, taping, and special instructions.</p>
+      </div>
+      <div class="callout-toolbox">
+        <div class="callout-toolbox-header">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="addSewingCallout()">+ Add Seam Callout</button>
+          <h4 style="margin-left:auto;">Letter Callouts</h4>
+        </div>
+        <div class="callout-instructions">
+          <strong>1.</strong> Select letter <strong>2.</strong> Click placement zone <strong>3.</strong> Press <kbd>Tab</kbd> for next
+        </div>
+        <div class="letter-row" id="sewing-letter-row" data-tab="sewing"></div>
+      </div>
+    </div>
+
+    <div class="placement-row">
+      <div class="placement-zone" data-zone="sewing-front" data-side="front" onclick="placeMarkerHere(event, this)">
+        <div class="placement-zone-label">
+          <span>FRONT <span class="required">*</span></span>
+          <label class="upload-trigger">
+            Upload sketch
+            <input type="file" accept="image/*" style="display:none" onchange="uploadZoneImage(this, 'sewing-front')">
+          </label>
+        </div>
+        <div class="placement-zone-empty">Click "Upload sketch" to add front view</div>
+      </div>
+      <div class="placement-zone" data-zone="sewing-back" data-side="back" onclick="placeMarkerHere(event, this)">
+        <div class="placement-zone-label">
+          <span>BACK <span class="required">*</span></span>
+          <label class="upload-trigger">
+            Upload sketch
+            <input type="file" accept="image/*" style="display:none" onchange="uploadZoneImage(this, 'sewing-back')">
+          </label>
+        </div>
+        <div class="placement-zone-empty">Click "Upload sketch" to add back view</div>
+      </div>
+    </div>
+
+    <div id="sewing-callouts-container"></div>
+
+    <!-- Color Map for Sewing Callouts (per colorway: Stitch A, Stitch B) -->
+    <div id="sewing-color-map" class="color-map-table"></div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       TAB 4: WASH & FINISHING
+       ═══════════════════════════════════════════ -->
+  <section id="panel-4" class="tab-panel" role="tabpanel" aria-labelledby="tab-4">
+    <div class="section-header">
+      <div class="section-header-text">
+        <h2>Wash &amp; Finishing</h2>
+        <p>Wash recipes, distress callouts, and critical DO NOT warnings.</p>
+      </div>
+      <div class="callout-toolbox">
+        <div class="callout-toolbox-header">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="addWashCallout()">+ Add Distress</button>
+          <h4 style="margin-left:auto;">Letter Callouts</h4>
+        </div>
+        <div class="callout-instructions">
+          Select letter, click on front/back to place distress zone marker
+        </div>
+        <div class="letter-row" id="wash-letter-row" data-tab="wash"></div>
+      </div>
+    </div>
+
+    <div class="placement-row">
+      <div class="placement-zone" data-zone="wash-front" data-side="front" onclick="placeMarkerHere(event, this)">
+        <div class="placement-zone-label">
+          <span>FRONT <span class="required">*</span></span>
+          <label class="upload-trigger">
+            Upload sketch
+            <input type="file" accept="image/*" style="display:none" onchange="uploadZoneImage(this, 'wash-front')">
+          </label>
+        </div>
+        <div class="placement-zone-empty">Click "Upload sketch" to add front view</div>
+      </div>
+      <div class="placement-zone" data-zone="wash-back" data-side="back" onclick="placeMarkerHere(event, this)">
+        <div class="placement-zone-label">
+          <span>BACK <span class="required">*</span></span>
+          <label class="upload-trigger">
+            Upload sketch
+            <input type="file" accept="image/*" style="display:none" onchange="uploadZoneImage(this, 'wash-back')">
+          </label>
+        </div>
+        <div class="placement-zone-empty">Click "Upload sketch" to add back view</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Wash Recipe</h3></div>
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label>Wash Type</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" name="wash" value="enzyme"><span>Enzyme</span></label>
+            <label><input type="checkbox" name="wash" value="stone"><span>Stone Wash</span></label>
+            <label><input type="checkbox" name="wash" value="acid"><span>Acid Wash</span></label>
+            <label><input type="checkbox" name="wash" value="bleach"><span>Bleach</span></label>
+            <label><input type="checkbox" name="wash" value="garment-dye"><span>Garment Dye</span></label>
+            <label><input type="checkbox" name="wash" value="silicone"><span>Silicone Softener</span></label>
+            <label><input type="checkbox" name="wash" value="none"><span>None / Raw</span></label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="wash-level">Wash Intensity</label>
+          <select id="wash-level"><option>Light</option><option>Medium</option><option>Heavy</option></select>
+        </div>
+        <div class="form-group full-width">
+          <label for="wash-notes">Wash Special Instructions</label>
+          <textarea id="wash-notes" placeholder="Special wash instructions..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Distress Callouts</h3></div>
+      <div id="distress-container"></div>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="addDistressRow()" style="margin-top:0.5rem;">+ Add Distress Callout</button>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Production Warnings</h3></div>
+      <div id="warnings-container"></div>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="addWarning()" style="margin-top:0.5rem;">+ Add Warning</button>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       TAB 5: ART & EMBELLISHMENTS (1) — FRONT
+       ═══════════════════════════════════════════ -->
+  <section id="panel-5" class="tab-panel" role="tabpanel" aria-labelledby="tab-5">
+    <div class="section-header">
+      <div class="section-header-text">
+        <h2>Art &amp; Embellishments (1)</h2>
+        <p>Screen prints, embroidery, patches, appliqué — multi-layer technique support and per-colorway color specs.</p>
+      </div>
+      <div class="callout-toolbox">
+        <div class="callout-toolbox-header">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="addArtCallout('art1')">+ Add Art</button>
+          <h4 style="margin-left:auto;">Letter Callouts</h4>
+        </div>
+        <div class="callout-instructions">
+          Select letter and click on the placement zone to mark the location
+        </div>
+        <div class="letter-row" id="art1-letter-row" data-tab="art1"></div>
+      </div>
+    </div>
+
+    <div class="art-placement-tabs">
+      <label class="art-placement-tab active"><input type="checkbox" checked disabled><span>Front</span></label>
+      <label class="art-placement-tab" style="opacity:0.6"><input type="checkbox" disabled><span>Back</span></label>
+      <label class="art-placement-tab" style="opacity:0.6"><input type="checkbox" disabled><span>Other 1</span></label>
+      <label class="art-placement-tab" style="opacity:0.6"><input type="checkbox" disabled><span>Other 2</span></label>
+      <label class="art-placement-tab" style="opacity:0.6"><input type="checkbox" disabled><span>Other 3</span></label>
+    </div>
+
+    <div class="form-grid" style="margin-bottom:1rem;">
+      <div class="placement-zone" data-zone="art1-front" data-side="front" onclick="placeMarkerHere(event, this)" style="min-height:240px;">
+        <div class="placement-zone-label">
+          <span>FRONT <span class="required">*</span></span>
+          <label class="upload-trigger">
+            Upload sketch
+            <input type="file" accept="image/*" style="display:none" onchange="uploadZoneImage(this, 'art1-front')">
+          </label>
+        </div>
+        <div class="placement-zone-empty">Click "Upload sketch" to add front view</div>
+      </div>
+      <div class="form-group">
+        <label>Placement Description</label>
+        <input type="text" id="art1-placement" placeholder="e.g. 7 inches below High Point Shoulder">
+        <div class="form-grid" style="margin-top:0.5rem;">
+          <div class="form-group">
+            <label>Width</label>
+            <input type="text" id="art1-width" placeholder='e.g. 4"'>
+          </div>
+          <div class="form-group">
+            <label>Height</label>
+            <input type="text" id="art1-height" placeholder='e.g. 3"'>
+          </div>
+        </div>
+        <label style="margin-top:0.5rem;">Art File Upload</label>
+        <input type="file" id="art1-file" accept="image/*" onchange="previewImage(this, 'art1-file-preview')">
+        <div id="art1-file-preview" class="image-preview"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Technique Layers (per colorway)</h3></div>
+      <div id="art1-color-table-wrap"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       TAB 6: ART & EMBELLISHMENTS (2) — BACK
+       ═══════════════════════════════════════════ -->
+  <section id="panel-6" class="tab-panel" role="tabpanel" aria-labelledby="tab-6">
+    <div class="section-header">
+      <div class="section-header-text">
+        <h2>Art &amp; Embellishments (2)</h2>
+        <p>Back placement — second art piece with separate placement, dimensions, and technique layers.</p>
+      </div>
+      <div class="callout-toolbox">
+        <div class="callout-toolbox-header">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="addArtCallout('art2')">+ Add Art</button>
+          <h4 style="margin-left:auto;">Letter Callouts</h4>
+        </div>
+        <div class="callout-instructions">
+          Select letter and click on the placement zone to mark the location
+        </div>
+        <div class="letter-row" id="art2-letter-row" data-tab="art2"></div>
+      </div>
+    </div>
+
+    <div class="art-placement-tabs">
+      <label class="art-placement-tab" style="opacity:0.6"><input type="checkbox" disabled><span>Front</span></label>
+      <label class="art-placement-tab active"><input type="checkbox" checked disabled><span>Back</span></label>
+      <label class="art-placement-tab" style="opacity:0.6"><input type="checkbox" disabled><span>Other 1</span></label>
+      <label class="art-placement-tab" style="opacity:0.6"><input type="checkbox" disabled><span>Other 2</span></label>
+      <label class="art-placement-tab" style="opacity:0.6"><input type="checkbox" disabled><span>Other 3</span></label>
+    </div>
+
+    <div class="form-grid" style="margin-bottom:1rem;">
+      <div class="placement-zone" data-zone="art2-back" data-side="back" onclick="placeMarkerHere(event, this)" style="min-height:240px;">
+        <div class="placement-zone-label">
+          <span>BACK <span class="required">*</span></span>
+          <label class="upload-trigger">
+            Upload sketch
+            <input type="file" accept="image/*" style="display:none" onchange="uploadZoneImage(this, 'art2-back')">
+          </label>
+        </div>
+        <div class="placement-zone-empty">Click "Upload sketch" to add back view</div>
+      </div>
+      <div class="form-group">
+        <label>Placement Description</label>
+        <input type="text" id="art2-placement" placeholder="e.g. 2 inches below CB Neck seam">
+        <div class="form-grid" style="margin-top:0.5rem;">
+          <div class="form-group">
+            <label>Width</label>
+            <input type="text" id="art2-width" placeholder='e.g. 11"'>
+          </div>
+          <div class="form-group">
+            <label>Height</label>
+            <input type="text" id="art2-height" placeholder='e.g. 9"'>
+          </div>
+        </div>
+        <label style="margin-top:0.5rem;">Art File Upload</label>
+        <input type="file" id="art2-file" accept="image/*" onchange="previewImage(this, 'art2-file-preview')">
+        <div id="art2-file-preview" class="image-preview"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Technique Layers (per colorway)</h3></div>
+      <div id="art2-color-table-wrap"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       TAB 7: HARDWARE
+       ═══════════════════════════════════════════ -->
+  <section id="panel-7" class="tab-panel" role="tabpanel" aria-labelledby="tab-7">
+    <div class="section-header">
+      <div class="section-header-text">
+        <h2>Hardware Specifications</h2>
+        <p>Zippers, pullers, tapes, ribbons, snaps, rivets, and pocket details.</p>
+      </div>
+      <div class="callout-toolbox">
+        <div class="callout-toolbox-header">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="addHardwareCallout()">+ Add Hardware</button>
+          <h4 style="margin-left:auto;">Letter Callouts</h4>
+        </div>
+        <div class="callout-instructions">
+          Select letter and click placement zone to mark location
+        </div>
+        <div class="letter-row" id="hardware-letter-row" data-tab="hardware"></div>
+      </div>
+    </div>
+
+    <div class="placement-row">
+      <div class="placement-zone" data-zone="hardware-front" data-side="front" onclick="placeMarkerHere(event, this)">
+        <div class="placement-zone-label">
+          <span>FRONT <span class="required">*</span></span>
+          <label class="upload-trigger">
+            Upload sketch
+            <input type="file" accept="image/*" style="display:none" onchange="uploadZoneImage(this, 'hardware-front')">
+          </label>
+        </div>
+        <div class="placement-zone-empty">Click "Upload sketch" to add front view</div>
+      </div>
+      <div class="placement-zone" data-zone="hardware-back" data-side="back" onclick="placeMarkerHere(event, this)">
+        <div class="placement-zone-label">
+          <span>BACK <span class="required">*</span></span>
+          <label class="upload-trigger">
+            Upload sketch
+            <input type="file" accept="image/*" style="display:none" onchange="uploadZoneImage(this, 'hardware-back')">
+          </label>
+        </div>
+        <div class="placement-zone-empty">Click "Upload sketch" to add back view</div>
+      </div>
+    </div>
+
+    <div id="hardware-container"></div>
+
+    <!-- Color map for stitch colors per colorway -->
+    <div id="hardware-color-map" class="color-map-table"></div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       TAB 8: TRIM PACKAGE
+       ═══════════════════════════════════════════ -->
+  <section id="panel-8" class="tab-panel" role="tabpanel" aria-labelledby="tab-8">
+    <div class="section-header">
+      <div class="section-header-text">
+        <h2>Trim Package</h2>
+        <p>Damask &amp; Paper Labels — Main Label, Care Label, Hangtag, Polybag.</p>
+      </div>
+    </div>
+
+    <!-- Main Label -->
+    <div class="trim-card">
+      <div class="trim-card-header">
+        <span class="letter-circle lc-A" style="cursor:default;">A</span>
+        <h3>Main Label</h3>
+        <span class="badge">Damask</span>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="ml-type">Label Type</label>
+          <select id="ml-type">
+            <option>Damask</option><option>Woven</option>
+            <option>Printed</option><option>Heat Transfer</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="ml-dims">Dimensions (W × H)</label>
+          <input type="text" id="ml-dims" placeholder='e.g. 3 3/4" × 5/8"'>
+        </div>
+        <div class="form-group">
+          <label for="ml-attach">Attachment Method</label>
+          <select id="ml-attach"><option>SN Edgestitch</option><option>Bartack</option><option>Heat Seal</option></select>
+        </div>
+        <div class="form-group">
+          <label for="ml-placement">Distance Below Neck Seam</label>
+          <input type="text" id="ml-placement" placeholder='e.g. 1/2"'>
+        </div>
+        <div class="form-group">
+          <label for="ml-art">Art File</label>
+          <input type="file" id="ml-art" accept="image/*">
+        </div>
+        <div class="form-group">
+          <label for="ml-color1">Color &amp; Pantone #1</label>
+          <input type="text" id="ml-color1" placeholder="e.g. Black PMS 426">
+        </div>
+        <div class="form-group full-width">
+          <label for="ml-color2">Add Color &amp; Pantone</label>
+          <input type="text" id="ml-color2" placeholder="Additional color">
+        </div>
+      </div>
+    </div>
+
+    <!-- Care Label -->
+    <div class="trim-card">
+      <div class="trim-card-header">
+        <span class="letter-circle lc-B" style="cursor:default;">B</span>
+        <h3>Care Label</h3>
+        <span class="badge">Damask</span>
+      </div>
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label>Country of Origin</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" name="coo" value="China"><span>China</span></label>
+            <label><input type="checkbox" name="coo" value="India" checked><span>India</span></label>
+            <label><input type="checkbox" name="coo" value="Turkey"><span>Turkey</span></label>
+            <label><input type="checkbox" name="coo" value="Bangladesh"><span>Bangladesh</span></label>
+            <label><input type="checkbox" name="coo" value="Vietnam"><span>Vietnam</span></label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="cl-rn">RN Number</label>
+          <input type="text" id="cl-rn" placeholder="e.g. RN#149547">
+        </div>
+        <div class="form-group">
+          <label for="cl-fiber">Fiber Composition</label>
+          <input type="text" id="cl-fiber" value="Follow Fabric Fiber Composition" readonly>
+        </div>
+        <div class="form-group">
+          <label for="cl-art">Art File</label>
+          <input type="file" id="cl-art" accept="image/*">
+        </div>
+        <div class="form-group">
+          <label for="cl-color1">Color &amp; Pantone #</label>
+          <input type="text" id="cl-color1" placeholder="e.g. Black on White">
+        </div>
+      </div>
+    </div>
+
+    <!-- Hangtag -->
+    <div class="trim-card">
+      <div class="trim-card-header">
+        <span class="letter-circle lc-C" style="cursor:default;">C</span>
+        <h3>Hangtag</h3>
+        <span class="badge">Damask</span>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="ht-dims">Dimensions (W × H)</label>
+          <input type="text" id="ht-dims" placeholder='e.g. 1 3/4" × 5 3/4"'>
+        </div>
+        <div class="form-group">
+          <label for="ht-finish">Finish</label>
+          <select id="ht-finish"><option>Gloss / Matte (dual)</option><option>Gloss</option><option>Matte</option></select>
+        </div>
+        <div class="form-group">
+          <label for="ht-ribbon">Attachment Ribbon</label>
+          <input type="text" id="ht-ribbon" placeholder='e.g. 3/8" grosgrain, 16" length, black'>
+        </div>
+        <div class="form-group">
+          <label for="ht-msrp">G1 Price Ticket / UPC / MSRP</label>
+          <input type="text" id="ht-msrp" placeholder="TBD">
+        </div>
+        <div class="form-group">
+          <label for="ht-art">Art File</label>
+          <input type="file" id="ht-art" accept="image/*">
+        </div>
+        <div class="form-group">
+          <label for="ht-color1">Color &amp; Pantone #</label>
+          <input type="text" id="ht-color1" placeholder="Pantone code">
+        </div>
+      </div>
+    </div>
+
+    <!-- Polybag -->
+    <div class="trim-card">
+      <div class="trim-card-header">
+        <span class="letter-circle lc-D" style="cursor:default;">D</span>
+        <h3>Polybag</h3>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="pk-bag">Bag Type</label>
+          <select id="pk-bag"><option>Printed Poly Bag</option><option>Plain Poly Bag</option><option>Tissue Wrap</option><option>None</option></select>
+        </div>
+        <div class="form-group">
+          <label for="pk-dims">Bag Dimensions</label>
+          <input type="text" id="pk-dims" placeholder='e.g. 12" × 16"'>
+        </div>
+        <div class="form-group">
+          <label for="pk-closure">Closure</label>
+          <select id="pk-closure"><option>Ziplock</option><option>Adhesive</option><option>None</option></select>
+        </div>
+        <div class="form-group">
+          <label for="pk-fold">Fold Method</label>
+          <select id="pk-fold"><option>Board Fold</option><option>Hanger</option><option>Rolled</option></select>
+        </div>
+        <div class="form-group">
+          <label for="pk-art">Art File</label>
+          <input type="file" id="pk-art" accept="image/*">
+        </div>
+        <div class="form-group">
+          <label for="pk-color1">Color &amp; Pantone #</label>
+          <input type="text" id="pk-color1" placeholder="Pantone code">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       TAB 9: FIT MEASUREMENTS
+       ═══════════════════════════════════════════ -->
+  <section id="panel-9" class="tab-panel" role="tabpanel" aria-labelledby="tab-9">
+    <div class="section-header">
+      <div class="section-header-text">
+        <h2>Fit Measurements</h2>
+        <p>Graded spec table — enter measurements per size. Rows auto-adjust based on garment type.</p>
+      </div>
+    </div>
+
+    <div class="form-grid" style="margin-bottom:1rem;">
+      <div class="form-group">
+        <label for="fit-style-name">Style Description</label>
+        <input type="text" id="fit-style-name" placeholder="e.g. OVERSIZED SET IN SLEEVE HOODY">
+      </div>
+      <div class="form-group">
+        <label for="base-size">Base Size (grade from)</label>
+        <select id="base-size" onchange="buildFitTable()">
+          <option>M</option><option>L</option><option>S</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="tolerance">Default Tolerance</label>
+        <input type="text" id="tolerance" value="± 1/2&quot;" placeholder="± 1/2 inch" onchange="buildFitTable()">
+      </div>
+      <div class="form-group">
+        <label>&nbsp;</label>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="buildFitTable()">🔄 Rebuild Table</button>
+      </div>
+    </div>
+
+    <div class="data-table-wrapper">
+      <table class="data-table" id="fit-table">
+        <thead>
+          <tr id="fit-header-row">
+            <th>Measurement Point</th>
+            <th>Tolerance</th>
+          </tr>
+        </thead>
+        <tbody id="fit-body"></tbody>
+      </table>
+    </div>
+    <p style="margin-top:0.75rem;font-size:0.78rem;color:var(--text-secondary);">
+      Tip: Set Garment Type in Tab 1 to auto-populate measurement points specific to that garment.
+    </p>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       TAB 10: REVIEW & EXPORT
+       ═══════════════════════════════════════════ -->
+  <section id="panel-10" class="tab-panel" role="tabpanel" aria-labelledby="tab-10">
+    <div class="section-header">
+      <div class="section-header-text">
+        <h2>Review &amp; Export</h2>
+        <p>Preview your complete techpack. Validate fields and export.</p>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:0.6rem;margin-bottom:1.25rem;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="generateReview()">🔄 Refresh Preview</button>
+      <button class="btn btn-secondary" onclick="exportJSON()">⬇ Export JSON</button>
+      <button class="btn btn-secondary" onclick="exportHTML()">📄 Export HTML</button>
+      <button class="btn btn-secondary" onclick="window.print()">🖨 Print to PDF</button>
+    </div>
+
+    <div id="review-content">
+      <p style="color:var(--text-secondary);font-style:italic;">Click "Refresh Preview" to see a summary of all your techpack data.</p>
+    </div>
+  </section>
+
+</main>
+
+<div id="status-toast" class="status-message" role="status" aria-live="polite"></div>
+
+<script>
+/* ═══════════════════════════════════════
+   GLOBAL STATE
+   ═══════════════════════════════════════ */
+const LETTERS = ['A','B','C','D','E','F','G','H','I','J'];
+const TAB_NAMES = ['construction','sewing','wash','art1','art2','hardware'];
+
+// Active letter selection per tab
+const activeLetterByTab = {
+  construction: null,
+  sewing: null,
+  wash: null,
+  art1: null,
+  art2: null,
+  hardware: null
+};
+
+// All markers placed: { tab: {letter: [{zone, x, y, id}]} }
+const placedMarkers = {
+  construction: {},
+  sewing: {},
+  wash: {},
+  art1: {},
+  art2: {},
+  hardware: {}
+};
+
+let colorwayCount = 0;
+let markerIdCounter = 0;
+let isDragging = false;
+
+/* ═══════════════════════════════════════
+   TAB SWITCHING
+   ═══════════════════════════════════════ */
+const panels = document.querySelectorAll('.tab-panel');
+const tabs = document.querySelectorAll('[role="tab"]');
+
+function switchTab(index) {
+  tabs.forEach((t, i) => t.setAttribute('aria-selected', i === index ? 'true' : 'false'));
+  panels.forEach((p, i) => p.classList.toggle('active', i === index));
+  
+  const liveRegion = document.getElementById('live-status');
+  if (liveRegion) liveRegion.textContent = 'Now viewing: ' + (panels[index].querySelector('h2')?.textContent || '');
+
+  // Auto-refresh on tab visit
+  if (index === 1) renderConstructionColorMap();
+  if (index === 2) renderSewingColorMap();
+  if (index === 4) renderArtColorTable('art1');
+  if (index === 5) renderArtColorTable('art2');
+  if (index === 6) renderHardwareColorMap();
+  if (index === 8) buildFitTable();
+  if (index === 9) generateReview();
+
+  // Clear active letter when changing tabs
+  clearActiveLetter();
+}
+
+document.querySelector('.tab-list').addEventListener('keydown', function(e) {
+  const current = Array.from(tabs).findIndex(t => t.getAttribute('aria-selected') === 'true');
+  let next = current;
+  if (e.key === 'ArrowRight') next = (current + 1) % tabs.length;
+  else if (e.key === 'ArrowLeft') next = (current - 1 + tabs.length) % tabs.length;
+  else if (e.key === 'Home') next = 0;
+  else if (e.key === 'End') next = tabs.length - 1;
+  else return;
+  e.preventDefault();
+  tabs[next].focus();
+  switchTab(next);
+});
+
+/* ═══════════════════════════════════════
+   TOAST NOTIFICATIONS
+   ═══════════════════════════════════════ */
+function showToast(msg, type) {
+  const toast = document.getElementById('status-toast');
+  toast.textContent = msg;
+  toast.className = 'status-message visible ' + (type || 'info');
+  clearTimeout(toast._timeout);
+  toast._timeout = setTimeout(() => { toast.className = 'status-message'; }, 2500);
+}
+
+/* ═══════════════════════════════════════
+   IMAGE PREVIEW
+   ═══════════════════════════════════════ */
+function previewImage(input, previewId) {
+  const c = document.getElementById(previewId);
+  if (!c) return;
+  c.innerHTML = '';
+  if (input.files && input.files[0]) {
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(input.files[0]);
+    img.alt = 'Preview';
+    img.style.cssText = 'max-width:200px;max-height:200px;object-fit:contain;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);margin-top:0.5rem;';
+    c.appendChild(img);
+  }
+}
+
+/* ═══════════════════════════════════════
+   ZONE IMAGE UPLOAD (for placement zones)
+   ═══════════════════════════════════════ */
+function uploadZoneImage(input, zoneKey) {
+  const zone = document.querySelector(`[data-zone="${zoneKey}"]`);
+  if (!zone || !input.files || !input.files[0]) return;
+  
+  // Remove any existing image and empty message
+  const oldImg = zone.querySelector('img.zone-image');
+  if (oldImg) oldImg.remove();
+  const empty = zone.querySelector('.placement-zone-empty');
+  if (empty) empty.style.display = 'none';
+  
+  const img = document.createElement('img');
+  img.src = URL.createObjectURL(input.files[0]);
+  img.className = 'zone-image';
+  img.alt = 'Sketch';
+  zone.appendChild(img);
+  showToast('Sketch uploaded', 'success');
+}
+
+// Stop click propagation on file inputs inside placement zones
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('upload-trigger') || e.target.tagName === 'INPUT' && e.target.type === 'file') {
+    e.stopPropagation();
+  }
+});
+
+/* ═══════════════════════════════════════
+   SIZE TOGGLING
+   ═══════════════════════════════════════ */
+function toggleSize(cell) {
+  cell.classList.toggle('selected');
+  const size = cell.dataset.size;
+  // Enable/disable matching size scale input
+  const scaleInput = document.querySelector(`.size-scale-input[data-size="${size}"]`);
+  if (scaleInput) {
+    if (cell.classList.contains('selected')) {
+      scaleInput.disabled = false;
+      if (!scaleInput.value) scaleInput.value = '1';
+    } else {
+      scaleInput.disabled = true;
+      scaleInput.value = '';
+    }
+  }
+}
+
+function getSelectedSizes() {
+  return Array.from(document.querySelectorAll('.size-cell.selected')).map(c => c.dataset.size);
+}
+
+/* ═══════════════════════════════════════
+   COLORWAY MANAGEMENT (PDF style — each cw has front/back sketch)
+   ═══════════════════════════════════════ */
+function addColorway() {
+  const idx = colorwayCount++;
+  const container = document.getElementById('colorways-container');
+  const block = document.createElement('div');
+  block.className = 'colorway-block';
+  block.dataset.cwIdx = idx;
+  block.innerHTML = `
+    <div class="colorway-header">
+      <h4>Colorway ${idx + 1}</h4>
+      <button type="button" class="btn btn-danger btn-icon" onclick="removeColorway(this)" aria-label="Remove colorway">✕</button>
+    </div>
+    <div class="colorway-flat-grid">
+      <div class="flat-upload-zone">
+        <label>Flat Sketch — Front <span style="color:var(--error)">*</span></label>
+        <input type="file" accept="image/*" onchange="cwPreview(this, 'cw-thumb-front-${idx}')">
+        <div class="preview-thumb" id="cw-thumb-front-${idx}"></div>
+      </div>
+      <div class="flat-upload-zone">
+        <label>Flat Sketch — Back <span style="color:var(--error)">*</span></label>
+        <input type="file" accept="image/*" onchange="cwPreview(this, 'cw-thumb-back-${idx}')">
+        <div class="preview-thumb" id="cw-thumb-back-${idx}"></div>
+      </div>
+    </div>
+    <div class="colorway-name-row">
+      <div class="form-group">
+        <label>Color Name — Front</label>
+        <input type="text" id="cw-name-front-${idx}" placeholder="e.g. BLACK" onchange="onColorwayChange()">
+      </div>
+      <div class="form-group">
+        <label>Color Name — Back</label>
+        <input type="text" id="cw-name-back-${idx}" placeholder="e.g. BLACK" onchange="onColorwayChange()">
+      </div>
+    </div>
+    <div class="form-grid" style="margin-top:0.5rem;">
+      <div class="form-group">
+        <label>Pantone Code — Front</label>
+        <input type="text" id="cw-pantone-front-${idx}" placeholder="e.g. 19-0303TPX" onchange="onColorwayChange()">
+      </div>
+      <div class="form-group">
+        <label>Pantone Code — Back</label>
+        <input type="text" id="cw-pantone-back-${idx}" placeholder="e.g. 19-0303TPX" onchange="onColorwayChange()">
+      </div>
+    </div>
+  `;
+  container.appendChild(block);
+  showToast('Colorway added', 'success');
+  onColorwayChange();
+}
+
+function cwPreview(input, previewId) {
+  const c = document.getElementById(previewId);
+  if (!c || !input.files || !input.files[0]) return;
+  c.innerHTML = '';
+  const img = document.createElement('img');
+  img.src = URL.createObjectURL(input.files[0]);
+  img.alt = 'Sketch';
+  c.appendChild(img);
+}
+
+function removeColorway(btn) {
+  if (document.querySelectorAll('.colorway-block').length <= 1) {
+    showToast('You need at least one colorway', 'error');
+    return;
+  }
+  btn.closest('.colorway-block').remove();
+  onColorwayChange();
+}
+
+function getColorways() {
+  const blocks = document.querySelectorAll('.colorway-block');
+  const cws = [];
+  blocks.forEach(b => {
+    const idx = b.dataset.cwIdx;
+    const nameFront = document.getElementById(`cw-name-front-${idx}`)?.value || '';
+    const nameBack = document.getElementById(`cw-name-back-${idx}`)?.value || '';
+    const pantoneFront = document.getElementById(`cw-pantone-front-${idx}`)?.value || '';
+    const pantoneBack = document.getElementById(`cw-pantone-back-${idx}`)?.value || '';
+    if (nameFront || nameBack) {
+      cws.push({
+        idx,
+        name: nameFront || nameBack,
+        nameFront,
+        nameBack,
+        pantone: pantoneFront || pantoneBack,
+        pantoneFront,
+        pantoneBack
+      });
+    }
+  });
+  return cws;
+}
+
+function onColorwayChange() {
+  // When colorways change, refresh dependent tables
+  renderConstructionColorMap();
+  renderSewingColorMap();
+  renderHardwareColorMap();
+  renderArtColorTable('art1');
+  renderArtColorTable('art2');
+}
+
+/* ═══════════════════════════════════════
+   LETTER CALLOUT SYSTEM
+   ═══════════════════════════════════════ */
+function buildLetterRow(tabKey) {
+  const row = document.getElementById(`${tabKey}-letter-row`);
+  if (!row) return;
+  row.innerHTML = '';
+  LETTERS.forEach(letter => {
+    const circle = document.createElement('div');
+    circle.className = `letter-circle lc-${letter}`;
+    circle.textContent = letter;
+    circle.dataset.letter = letter;
+    circle.dataset.tab = tabKey;
+    circle.title = `Letter ${letter} — Click to select, then click placement zone`;
+    circle.onclick = () => selectLetter(tabKey, letter);
+    row.appendChild(circle);
+  });
+}
+
+function selectLetter(tabKey, letter) {
+  // Toggle off if already active
+  if (activeLetterByTab[tabKey] === letter) {
+    clearActiveLetter();
+    return;
+  }
+  
+  // Clear all active states across tabs
+  document.querySelectorAll('.letter-circle.active').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.placement-zone.active-targeting').forEach(z => z.classList.remove('active-targeting'));
+  
+  // Set new active letter for this tab
+  for (const tk of Object.keys(activeLetterByTab)) activeLetterByTab[tk] = null;
+  activeLetterByTab[tabKey] = letter;
+  
+  // Visual feedback
+  const circle = document.querySelector(`#${tabKey}-letter-row .letter-circle[data-letter="${letter}"]`);
+  if (circle) circle.classList.add('active');
+  
+  // Highlight placement zones in current tab
+  const currentPanel = document.querySelector('.tab-panel.active');
+  if (currentPanel) {
+    currentPanel.querySelectorAll('.placement-zone').forEach(z => z.classList.add('active-targeting'));
+  }
+  
+  // Show banner
+  const banner = document.getElementById('active-letter-banner');
+  document.getElementById('alb-letter').textContent = letter;
+  banner.classList.add('visible');
+  
+  showToast(`Letter ${letter} selected — click placement zone to mark`, 'info');
+}
+
+function clearActiveLetter() {
+  for (const tk of Object.keys(activeLetterByTab)) activeLetterByTab[tk] = null;
+  document.querySelectorAll('.letter-circle.active').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.placement-zone.active-targeting').forEach(z => z.classList.remove('active-targeting'));
+  document.getElementById('active-letter-banner').classList.remove('visible');
+}
+
+function placeMarkerHere(event, zone) {
+  // Block if click was on file/upload elements
+  if (event.target.tagName === 'INPUT' || event.target.classList.contains('upload-trigger') || isDragging) return;
+  
+  // Find which tab this zone belongs to
+  const zoneKey = zone.dataset.zone;
+  const tabKey = zoneKey.split('-')[0];
+  const activeLetter = activeLetterByTab[tabKey];
+  
+  if (!activeLetter) {
+    showToast('Select a letter first (click on A–J above)', 'error');
+    return;
+  }
+  
+  // Calculate relative position
+  const rect = zone.getBoundingClientRect();
+  const x = ((event.clientX - rect.left) / rect.width) * 100;
+  const y = ((event.clientY - rect.top) / rect.height) * 100;
+  
+  // Don't place if click is in label area (top)
+  if (y < 8) return;
+  
+  // Create marker
+  const markerId = `marker-${markerIdCounter++}`;
+  const marker = document.createElement('div');
+  marker.className = `callout-marker marker-${activeLetter}`;
+  marker.textContent = activeLetter;
+  marker.id = markerId;
+  marker.dataset.letter = activeLetter;
+  marker.dataset.tab = tabKey;
+  marker.dataset.zone = zoneKey;
+  marker.style.left = x + '%';
+  marker.style.top = y + '%';
+  marker.title = `Letter ${activeLetter} — Drag to move, double-click to remove`;
+  
+  // Drag support
+  marker.addEventListener('mousedown', startDrag);
+  marker.addEventListener('dblclick', (e) => {
+    e.stopPropagation();
+    if (confirm(`Remove marker ${activeLetter}?`)) {
+      removeMarker(markerId, tabKey, activeLetter);
+    }
+  });
+  
+  zone.appendChild(marker);
+  
+  // Track in state
+  if (!placedMarkers[tabKey][activeLetter]) placedMarkers[tabKey][activeLetter] = [];
+  placedMarkers[tabKey][activeLetter].push({ id: markerId, zone: zoneKey, x, y });
+  
+  // Mark letter as used
+  const circle = document.querySelector(`#${tabKey}-letter-row .letter-circle[data-letter="${activeLetter}"]`);
+  if (circle) circle.classList.add('used');
+  
+  showToast(`Letter ${activeLetter} placed`, 'success');
+}
+
+function removeMarker(markerId, tabKey, letter) {
+  const m = document.getElementById(markerId);
+  if (m) m.remove();
+  if (placedMarkers[tabKey][letter]) {
+    placedMarkers[tabKey][letter] = placedMarkers[tabKey][letter].filter(x => x.id !== markerId);
+    if (placedMarkers[tabKey][letter].length === 0) {
+      const circle = document.querySelector(`#${tabKey}-letter-row .letter-circle[data-letter="${letter}"]`);
+      if (circle) circle.classList.remove('used');
+    }
+  }
+}
+
+/* ─── DRAG MARKERS ─── */
+let dragData = null;
+function startDrag(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  isDragging = true;
+  const marker = e.currentTarget;
+  const zone = marker.parentElement;
+  dragData = { marker, zone };
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('mouseup', endDrag);
+}
+
+function onDrag(e) {
+  if (!dragData) return;
+  const rect = dragData.zone.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) / rect.width) * 100;
+  const y = ((e.clientY - rect.top) / rect.height) * 100;
+  if (x < 0 || x > 100 || y < 0 || y > 100) return;
+  dragData.marker.style.left = x + '%';
+  dragData.marker.style.top = y + '%';
+}
+
+function endDrag() {
+  document.removeEventListener('mousemove', onDrag);
+  document.removeEventListener('mouseup', endDrag);
+  setTimeout(() => { isDragging = false; }, 50);
+  dragData = null;
+}
+
+/* ─── KEYBOARD: TAB CYCLES LETTERS, ESC CLEARS ─── */
+document.addEventListener('keydown', (e) => {
+  // Don't intercept Tab in form fields
+  if (['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
+  
+  const currentTab = Object.keys(activeLetterByTab).find(k => activeLetterByTab[k]);
+  if (!currentTab) return;
+  
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const currentLetter = activeLetterByTab[currentTab];
+    const idx = LETTERS.indexOf(currentLetter);
+    const nextLetter = LETTERS[(idx + 1) % LETTERS.length];
+    selectLetter(currentTab, nextLetter);
+  } else if (e.key === 'Escape') {
+    clearActiveLetter();
+  }
+});
+
+/* ═══════════════════════════════════════
+   CALLOUT ENTRIES (Sewing/Construction/Wash/Hardware/Art)
+   ═══════════════════════════════════════ */
+
+/* ─── SEWING CALLOUTS ─── */
+const seamTypes = ['Overlock','Flat Lock','SN','DN','Zigzag','Coverstitch','French Seam','Bound Seam','Bartack'];
+const topstitchOpts = ['None','SN','DN','Decorative'];
+const tapingOpts = ['None','Self-tape','Bias Tape','Twill Tape','Grosgrain'];
+
+function addSewingCallout() {
+  const container = document.getElementById('sewing-callouts-container');
+  const existing = container.querySelectorAll('.callout-entry').length;
+  const letter = LETTERS[existing] || 'A';
+  const entry = document.createElement('div');
+  entry.className = 'callout-entry';
+  entry.dataset.calloutIdx = existing;
+  entry.innerHTML = `
+    <div class="callout-entry-header">
+      <div style="display:flex;align-items:center;">
+        <span class="callout-entry-letter lc-${letter}">${letter}</span>
+        <strong>Seam Callout ${letter}</strong>
+      </div>
+      <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.callout-entry').remove()">Remove</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Location</label>
+        <input type="text" placeholder="e.g. Side seam, sleeve attach...">
+      </div>
+      <div class="form-group">
+        <label>Seam Type</label>
+        <select>${seamTypes.map(s => `<option>${s}</option>`).join('')}</select>
+      </div>
+      <div class="form-group">
+        <label>Stitch Width</label>
+        <input type="text" value="3/16" placeholder='e.g. 3/16"'>
+      </div>
+      <div class="form-group">
+        <label>Topstitch</label>
+        <select>${topstitchOpts.map(s => `<option>${s}</option>`).join('')}</select>
+      </div>
+      <div class="form-group">
+        <label>Topstitch Width</label>
+        <input type="text" value="3/16" placeholder='e.g. 3/16"'>
+      </div>
+      <div class="form-group">
+        <label>Taping</label>
+        <select>${tapingOpts.map(s => `<option>${s}</option>`).join('')}</select>
+      </div>
+      <div class="form-group full-width">
+        <label>Special Instructions</label>
+        <input type="text" placeholder="e.g. Seam to seam only">
+      </div>
+    </div>
+  `;
+  container.appendChild(entry);
+  showToast(`Seam callout ${letter} added`, 'success');
+}
+
+/* ─── CONSTRUCTION FABRIC CALLOUTS ─── */
+function addFabricCallout() {
+  // Just enable letter selection — fabric A and B already exist as sections
+  showToast('Use letter callouts to mark fabric placement on sketches', 'info');
+}
+
+/* ─── WASH DISTRESS CALLOUTS ─── */
+function addWashCallout() {
+  showToast('Use letter callouts above to mark distress zones on sketches', 'info');
+}
+
+function addDistressRow() {
+  const container = document.getElementById('distress-container');
+  const idx = container.children.length;
+  const letter = LETTERS[idx] || 'A';
+  const row = document.createElement('div');
+  row.className = 'repeating-row';
+  row.style.flexWrap = 'wrap';
+  row.innerHTML = `
+    <div class="form-group" style="max-width:55px;flex:0 0 auto;">
+      <label>Letter</label>
+      <input type="text" value="${letter}" readonly style="text-align:center;font-weight:700;">
+    </div>
+    <div class="form-group">
+      <label>Technique</label>
+      <select><option>Grind</option><option>Cut</option><option>Laser</option><option>Sandblast</option><option>Destroy</option><option>Whisker</option></select>
+    </div>
+    <div class="form-group">
+      <label>Body Zone</label>
+      <select><option>Shoulders</option><option>Chest</option><option>Sleeves</option><option>Bottom Hem</option><option>Back</option><option>All Over</option></select>
+    </div>
+    <div class="form-group">
+      <label>Intensity</label>
+      <select><option>Light</option><option>Medium</option><option>Heavy</option></select>
+    </div>
+    <div class="form-group">
+      <label>Special Instructions</label>
+      <input type="text" placeholder='e.g. "GRINDING ON FOLD ONLY"'>
+    </div>
+    <button type="button" class="btn btn-danger btn-icon btn-remove" onclick="this.closest('.repeating-row').remove()" aria-label="Remove">✕</button>
+  `;
+  container.appendChild(row);
+}
+
+function addWarning() {
+  const container = document.getElementById('warnings-container');
+  const row = document.createElement('div');
+  row.className = 'warning-row';
+  row.innerHTML = `
+    <span style="color:var(--warning);font-weight:700;">⚠</span>
+    <input type="text" placeholder='e.g. "DO NOT CUT sleeve openings"'>
+    <button type="button" class="btn btn-danger btn-icon" onclick="this.closest('.warning-row').remove()" aria-label="Remove warning">✕</button>
+  `;
+  container.appendChild(row);
+}
+
+/* ─── HARDWARE CALLOUTS ─── */
+const hardwareTypes = ['Zippers','Seam Tapes & Ribbons','Snaps','Pockets','Rivets','Buttons','Drawcord','Eyelets','Buckles','D-Rings'];
+
+function addHardwareCallout() {
+  const container = document.getElementById('hardware-container');
+  const existing = container.querySelectorAll('.callout-entry').length;
+  const letter = LETTERS[existing] || 'A';
+  const entry = document.createElement('div');
+  entry.className = 'callout-entry';
+  entry.innerHTML = `
+    <div class="callout-entry-header">
+      <div style="display:flex;align-items:center;flex:1;gap:0.6rem;">
+        <span class="callout-entry-letter lc-${letter}">${letter}</span>
+        <select style="max-width:200px;">${hardwareTypes.map(h => `<option>${h}</option>`).join('')}</select>
+      </div>
+      <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.callout-entry').remove()">Remove</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full-width">
+        <label>Description</label>
+        <textarea placeholder="Type, material, finish, dimensions, special notes..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Reference Photo</label>
+        <input type="file" accept="image/*">
+      </div>
+      <div class="form-group">
+        <label>Quantity</label>
+        <input type="number" placeholder="e.g. 1">
+      </div>
+    </div>
+  `;
+  container.appendChild(entry);
+  showToast(`Hardware ${letter} added`, 'success');
+}
+
+/* ─── ART CALLOUTS ─── */
+function addArtCallout(tabKey) {
+  showToast(`Use letter callouts above (A–J) to mark ${tabKey === 'art1' ? 'front' : 'back'} art placement`, 'info');
+}
+
+/* ═══════════════════════════════════════
+   COLOR MAPS (per colorway, per tab)
+   ═══════════════════════════════════════ */
+function renderConstructionColorMap() {
+  const cws = getColorways();
+  const wrap = document.getElementById('construction-color-map');
+  if (!wrap) return;
+  if (cws.length === 0) {
+    wrap.innerHTML = '<p style="font-size:0.8rem;color:var(--text-secondary);font-style:italic;">Add colorways in Tab 1 to enable per-colorway fabric color mapping.</p>';
+    return;
+  }
+  let html = '<h4 style="font-size:0.85rem;font-weight:700;margin-bottom:0.5rem;color:var(--text-label);">Color Mapping per Colorway</h4>';
+  html += `<div class="color-map-header"><div>Colorway</div><div><span class="letter-mini lc-A">A</span>Fabric Color</div><div><span class="letter-mini lc-B">B</span>Rib Color</div></div>`;
+  cws.forEach(c => {
+    html += `<div class="color-map-row">
+      <div class="cw-name-cell">${c.name || 'Colorway'}</div>
+      <input type="text" placeholder="Color &amp; Pantone #" value="${c.pantone || ''}">
+      <input type="text" placeholder="Color &amp; Pantone #">
+    </div>`;
+  });
+  wrap.innerHTML = html;
+}
+
+function renderSewingColorMap() {
+  const cws = getColorways();
+  const wrap = document.getElementById('sewing-color-map');
+  if (!wrap) return;
+  if (cws.length === 0) {
+    wrap.innerHTML = '<p style="font-size:0.8rem;color:var(--text-secondary);font-style:italic;">Add colorways in Tab 1 to enable per-colorway stitch color mapping.</p>';
+    return;
+  }
+  let html = '<h4 style="font-size:0.85rem;font-weight:700;margin-bottom:0.5rem;color:var(--text-label);">Stitch Color Mapping per Colorway</h4>';
+  html += `<div class="color-map-header"><div>Colorway</div><div><span class="letter-mini lc-A">A</span>Stitch Color A</div><div><span class="letter-mini lc-B">B</span>Stitch Color B</div></div>`;
+  cws.forEach(c => {
+    html += `<div class="color-map-row">
+      <div class="cw-name-cell">${c.name || 'Colorway'}</div>
+      <input type="text" placeholder="Color &amp; Pantone #">
+      <input type="text" placeholder="Color &amp; Pantone #">
+    </div>`;
+  });
+  wrap.innerHTML = html;
+}
+
+function renderHardwareColorMap() {
+  const cws = getColorways();
+  const wrap = document.getElementById('hardware-color-map');
+  if (!wrap) return;
+  if (cws.length === 0) {
+    wrap.innerHTML = '<p style="font-size:0.8rem;color:var(--text-secondary);font-style:italic;">Add colorways in Tab 1 to enable per-colorway hardware color mapping.</p>';
+    return;
+  }
+  let html = '<h4 style="font-size:0.85rem;font-weight:700;margin-bottom:0.5rem;color:var(--text-label);">Hardware Color Mapping per Colorway</h4>';
+  html += `<div class="color-map-header"><div>Colorway</div><div><span class="letter-mini lc-A">A</span>Stitch Color</div><div><span class="letter-mini lc-B">B</span>Hardware Color</div></div>`;
+  cws.forEach(c => {
+    html += `<div class="color-map-row">
+      <div class="cw-name-cell">${c.name || 'Colorway'}</div>
+      <input type="text" placeholder="Color &amp; Pantone #">
+      <input type="text" placeholder="Color &amp; Pantone #">
+    </div>`;
+  });
+  wrap.innerHTML = html;
+}
+
+/* ─── ART COLOR TABLE (8 layers × N colorways) ─── */
+const artTechniques = ['Felt','Plastisol Print','Puff Print','Satin Embroidery','Rag Embroidery','Appliqué','Chambray','Nylon','SN Topstitch','Screen Print','DTG Print','Sublimation','Other'];
+
+function renderArtColorTable(tabKey) {
+  const wrap = document.getElementById(`${tabKey}-color-table-wrap`);
+  if (!wrap) return;
+  const cws = getColorways();
+  const layers = LETTERS.slice(0, 8); // A-H
+
+  if (cws.length === 0) {
+    wrap.innerHTML = '<p style="font-size:0.8rem;color:var(--text-secondary);font-style:italic;">Add colorways in Tab 1 to enable per-colorway art color mapping.</p>';
+    return;
+  }
+
+  let html = '<table class="art-color-table"><thead><tr><th>Layer</th>';
+  cws.forEach(c => {
+    html += `<th><span class="cw-color-name">${c.name || 'Colorway'}</span><span style="font-size:0.7rem;font-weight:400;">${c.pantone || ''}</span></th>`;
+  });
+  html += '<th style="text-align:left;">Technique</th></tr></thead><tbody>';
+
+  layers.forEach(L => {
+    html += `<tr>
+      <td><span class="letter-circle lc-${L}" style="cursor:default;width:1.6rem;height:1.6rem;font-size:0.75rem;">${L}</span></td>`;
+    cws.forEach(() => {
+      html += `<td><input type="text" placeholder="Color & Pantone #"></td>`;
+    });
+    html += `<td><select>${artTechniques.map(t => `<option>${t}</option>`).join('')}</select></td>`;
+    html += `</tr>`;
+  });
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+/* ═══════════════════════════════════════
+   FIT MEASUREMENTS TABLE
+   ═══════════════════════════════════════ */
+const measurementsByType = {
+  default: ['Chest (1" below armhole)', 'Body Length (HPS)', 'Across Shoulder', 'Sleeve Length (CB)', 'Armhole', 'Bicep', 'Sleeve Opening', 'Bottom Opening', 'Neck Opening'],
+  crewneck: ['Front Body Length (HPS to bottom)', 'Back Body Length (HPS to bottom)', 'Chest 1" below armhole', 'Across Shoulder', 'Sleeve Length CB', 'Armhole length', 'Sleeve Opening from CB', 'Muscle 1" below armfit', 'Sleeve opening at seam', 'Bottom/Sleeve opening cuff height', 'Neck width (seam to seam)', 'Front Neck drop', 'Back Neck drop'],
+  hoodie: ['Front Body Length (HPS to bottom)', 'Back Body Length (HPS to bottom)', 'Side seam length', 'Across Shoulder', 'Chest 1" below armhole', 'Bottom opening relaxed', 'Bottom opening stretched', 'Armhole length', 'Sleeve Opening from CB', 'Muscle 1" below armfit', 'Forearm 2" above cuff seam', 'Sleeve opening at seam', 'Sleeve opening at edge', 'Bottom/Sleeve opening cuff height', 'Neck width (seam to seam)', 'Front Neck drop', 'Back Neck drop', 'Hood length from CF', 'Hood length from HPS', 'Hood width', 'Kangaroo Pocket — Width Top', 'Kangaroo Pocket — Width Middle', 'Kangaroo Pocket — Width Bottom', 'Kangaroo Pocket — Height'],
+  jacket: ['Chest (1" below armhole)', 'Body Length (HPS)', 'Across Shoulder', 'Sleeve Length (CB)', 'Armhole', 'Bicep', 'Sleeve Opening', 'Bottom Opening', 'Neck Opening', 'CF Zipper Length', 'Collar Height', 'Collar Width', 'Pocket Opening'],
+  vest: ['Chest (1" below armhole)', 'Body Length (HPS)', 'Across Shoulder', 'Armhole', 'Bottom Opening', 'Neck Opening', 'CF Zipper Length'],
+  tshirt: ['Chest (1" below armhole)', 'Body Length (HPS)', 'Across Shoulder', 'Sleeve Length (CB)', 'Armhole', 'Bicep', 'Sleeve Opening', 'Bottom Opening', 'Neck Opening (Rib)', 'Rib Height — Neck'],
+  jogger: ['Waist (Relaxed)', 'Waist (Stretched)', 'Front Rise', 'Back Rise', 'Thigh', 'Knee', 'Leg Opening', 'Inseam', 'Outseam'],
+  shorts: ['Waist (Relaxed)', 'Waist (Stretched)', 'Front Rise', 'Back Rise', 'Thigh', 'Leg Opening', 'Inseam', 'Outseam'],
+  polo: ['Chest (1" below armhole)', 'Body Length (HPS)', 'Across Shoulder', 'Sleeve Length (CB)', 'Armhole', 'Bicep', 'Sleeve Opening', 'Bottom Opening', 'Collar Height', 'Placket Length']
+};
+
+function buildFitTable() {
+  const garmentType = document.getElementById('garment-type')?.value || 'default';
+  const sizes = getSelectedSizes();
+  const measurements = measurementsByType[garmentType] || measurementsByType.default;
+  const tolerance = document.getElementById('tolerance')?.value || '± 1/2"';
+
+  const headerRow = document.getElementById('fit-header-row');
+  if (!headerRow) return;
+  headerRow.innerHTML = '<th>Measurement Point</th><th>Tolerance</th>';
+  sizes.forEach(s => { headerRow.innerHTML += `<th>${s}</th>`; });
+
+  const body = document.getElementById('fit-body');
+  body.innerHTML = '';
+  measurements.forEach(m => {
+    let row = `<tr><td>${m}</td><td><input type="text" value="${tolerance}" aria-label="${m} tolerance"></td>`;
+    sizes.forEach(s => {
+      row += `<td><input type="text" placeholder="—" aria-label="${m} size ${s}"></td>`;
+    });
+    row += '</tr>';
+    body.innerHTML += row;
+  });
+}
+
+function onGarmentTypeChange() {
+  const type = document.getElementById('garment-type').value;
+  const ribbingSection = document.getElementById('ribbing-section');
+  const showRibbing = ['crewneck', 'hoodie', 'tshirt', 'polo'].includes(type);
+  ribbingSection.style.display = showRibbing ? 'block' : 'none';
+  buildFitTable();
+}
+
+/* ─── FIBER COMPOSITION ─── */
+function addFiber() {
+  const container = document.getElementById('composition-container');
+  const row = document.createElement('div');
+  row.className = 'repeating-row';
+  row.innerHTML = `
+    <div class="form-group"><label>Fiber</label><input type="text" placeholder="e.g. Polyester"></div>
+    <div class="form-group" style="max-width:90px;"><label>%</label><input type="number" placeholder="5" min="0" max="100"></div>
+    <button type="button" class="btn btn-danger btn-icon btn-remove" onclick="this.closest('.repeating-row').remove()" aria-label="Remove">✕</button>
+  `;
+  container.appendChild(row);
+}
+
+/* ═══════════════════════════════════════
+   REVIEW
+   ═══════════════════════════════════════ */
+function generateReview() {
+  const cws = getColorways();
+  const sizes = getSelectedSizes();
+  const v = (id) => document.getElementById(id)?.value || '';
+  const c = document.getElementById('review-content');
+
+  let html = '';
+
+  html += '<div class="review-section"><h3>1. Design Overview</h3>';
+  html += reviewRow('Style Number', v('style-number'));
+  html += reviewRow('Style Name', v('style-name'));
+  html += reviewRow('Brand Header', v('brand-header'));
+  html += reviewRow('Season', v('season'));
+  html += reviewRow('Garment Type', v('garment-type'));
+  html += reviewRow('Date', v('tech-date'));
+  html += reviewRow('Designer', v('designer'));
+  html += reviewRow('Fit Type', v('fit-type'));
+  html += reviewRow('Size Range', sizes.join(', '));
+  html += reviewRow('Colorways', cws.map(x => `${x.name || 'Unnamed'} (${x.pantone || 'no pantone'})`).join(', ') || '—');
+  html += '</div>';
+
+  html += '<div class="review-section"><h3>2. Construction</h3>';
+  html += reviewRow('Fabric GSM', v('fabric-gsm'));
+  html += reviewRow('Fabric Type', v('fabric-type'));
+  html += reviewRow('Reference Style', v('ref-style'));
+  html += reviewRow('Rib Type', v('rib-type'));
+  html += reviewRow('Rib Match', v('rib-match'));
+  html += reviewRow('Construction Markers', countMarkers('construction'));
+  html += '</div>';
+
+  html += '<div class="review-section"><h3>3. Sewing Callouts</h3>';
+  const sewingEntries = document.querySelectorAll('#sewing-callouts-container .callout-entry').length;
+  html += reviewRow('Total Seam Callouts', sewingEntries + ' defined');
+  html += reviewRow('Sewing Markers', countMarkers('sewing'));
+  html += '</div>';
+
+  html += '<div class="review-section"><h3>4. Wash &amp; Finishing</h3>';
+  html += reviewRow('Wash Intensity', v('wash-level'));
+  html += reviewRow('Wash Notes', v('wash-notes'));
+  const distress = document.querySelectorAll('#distress-container .repeating-row').length;
+  html += reviewRow('Distress Callouts', distress);
+  const warnings = document.querySelectorAll('#warnings-container .warning-row').length;
+  html += reviewRow('Production Warnings', warnings);
+  html += '</div>';
+
+  html += '<div class="review-section"><h3>5–6. Art &amp; Embellishments</h3>';
+  html += reviewRow('Art 1 (Front) Placement', v('art1-placement'));
+  html += reviewRow('Art 1 Dimensions', `${v('art1-width')} × ${v('art1-height')}`);
+  html += reviewRow('Art 2 (Back) Placement', v('art2-placement'));
+  html += reviewRow('Art 2 Dimensions', `${v('art2-width')} × ${v('art2-height')}`);
+  html += '</div>';
+
+  html += '<div class="review-section"><h3>7. Hardware</h3>';
+  const hwCount = document.querySelectorAll('#hardware-container .callout-entry').length;
+  html += reviewRow('Hardware Items', hwCount + ' defined');
+  html += reviewRow('Hardware Markers', countMarkers('hardware'));
+  html += '</div>';
+
+  html += '<div class="review-section"><h3>8. Trim Package</h3>';
+  html += reviewRow('Main Label Type', v('ml-type'));
+  html += reviewRow('Main Label Dims', v('ml-dims'));
+  html += reviewRow('Care RN#', v('cl-rn'));
+  html += reviewRow('Hangtag Dims', v('ht-dims'));
+  html += reviewRow('MSRP', v('ht-msrp'));
+  html += reviewRow('Polybag', v('pk-bag'));
+  html += '</div>';
+
+  html += '<div class="review-section"><h3>9. Fit Measurements</h3>';
+  html += reviewRow('Garment Type', v('garment-type'));
+  html += reviewRow('Base Size', v('base-size'));
+  html += reviewRow('Tolerance', v('tolerance'));
+  html += reviewRow('Sizes', sizes.join(', '));
+  html += '</div>';
+
+  c.innerHTML = html;
+  showToast('Review refreshed', 'success');
+}
+
+function countMarkers(tabKey) {
+  const m = placedMarkers[tabKey] || {};
+  let count = 0;
+  Object.values(m).forEach(arr => count += arr.length);
+  return count + ' placed';
+}
+
+function reviewRow(label, value) {
+  return `<div class="review-row"><span class="review-label">${label}</span><span class="review-value">${value || '<span class="review-empty">Not entered</span>'}</span></div>`;
+}
+
+/* ═══════════════════════════════════════
+   EXPORT
+   ═══════════════════════════════════════ */
+function exportJSON() {
+  const cws = getColorways();
+  const sizes = getSelectedSizes();
+  const v = (id) => document.getElementById(id)?.value || '';
+  
+  // Collect size scale
+  const sizeScale = {};
+  document.querySelectorAll('.size-scale-input').forEach(i => {
+    if (!i.disabled && i.value) sizeScale[i.dataset.size] = i.value;
+  });
+
+  // Collect sewing callouts
+  const sewingCallouts = [];
+  document.querySelectorAll('#sewing-callouts-container .callout-entry').forEach((e, i) => {
+    const inputs = e.querySelectorAll('input, select, textarea');
+    sewingCallouts.push({
+      letter: LETTERS[i],
+      location: inputs[0]?.value || '',
+      seam_type: inputs[1]?.value || '',
+      stitch_width: inputs[2]?.value || '',
+      topstitch: inputs[3]?.value || '',
+      topstitch_width: inputs[4]?.value || '',
+      taping: inputs[5]?.value || '',
+      special_instructions: inputs[6]?.value || ''
+    });
+  });
+
+  // Collect hardware
+  const hardwareItems = [];
+  document.querySelectorAll('#hardware-container .callout-entry').forEach((e, i) => {
+    const select = e.querySelector('select');
+    const desc = e.querySelector('textarea');
+    const qty = e.querySelector('input[type="number"]');
+    hardwareItems.push({
+      letter: LETTERS[i],
+      type: select?.value || '',
+      description: desc?.value || '',
+      quantity: qty?.value || ''
+    });
+  });
+
+  // Collect distress
+  const distressList = [];
+  document.querySelectorAll('#distress-container .repeating-row').forEach(r => {
+    const sels = r.querySelectorAll('select');
+    const ipts = r.querySelectorAll('input');
+    distressList.push({
+      letter: ipts[0]?.value || '',
+      technique: sels[0]?.value || '',
+      zone: sels[1]?.value || '',
+      intensity: sels[2]?.value || '',
+      instructions: ipts[1]?.value || ''
+    });
+  });
+
+  // Collect warnings
+  const warnings = Array.from(document.querySelectorAll('#warnings-container .warning-row input')).map(i => i.value).filter(v => v);
+
+  const data = {
+    exported_at: new Date().toISOString(),
+    overview: {
+      style_number: v('style-number'),
+      style_name: v('style-name'),
+      brand_header: v('brand-header'),
+      season: v('season'),
+      garment_type: v('garment-type'),
+      date: v('tech-date'),
+      designer: v('designer'),
+      fit_type: v('fit-type'),
+      sizes,
+      size_scale: sizeScale,
+      colorways: cws,
+      notes: v('overview-notes')
+    },
+    construction: {
+      fabric_gsm: v('fabric-gsm'),
+      fabric_type: v('fabric-type'),
+      reference_style: v('ref-style'),
+      rib_type: v('rib-type'),
+      rib_match: v('rib-match'),
+      rib_notes: v('rib-notes')
+    },
+    sewing_callouts: sewingCallouts,
+    wash: {
+      intensity: v('wash-level'),
+      notes: v('wash-notes'),
+      distress: distressList,
+      warnings
+    },
+    art: {
+      front: {
+        placement: v('art1-placement'),
+        width: v('art1-width'),
+        height: v('art1-height')
+      },
+      back: {
+        placement: v('art2-placement'),
+        width: v('art2-width'),
+        height: v('art2-height')
+      }
+    },
+    hardware: hardwareItems,
+    trim_package: {
+      main_label: { type: v('ml-type'), dims: v('ml-dims'), attach: v('ml-attach'), placement: v('ml-placement') },
+      care_label: { rn: v('cl-rn') },
+      hangtag: { dims: v('ht-dims'), finish: v('ht-finish'), ribbon: v('ht-ribbon'), msrp: v('ht-msrp') },
+      polybag: { type: v('pk-bag'), dims: v('pk-dims'), closure: v('pk-closure'), fold: v('pk-fold') }
+    },
+    fit_measurements: {
+      base_size: v('base-size'),
+      tolerance: v('tolerance')
+    },
+    placement_markers: placedMarkers
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const styleNum = data.overview.style_number || 'export';
+  a.download = `techpack_${styleNum}_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('JSON exported!', 'success');
+}
+
+function exportHTML() {
+  // Snapshot the DOM and remove interactive bits
+  const clone = document.documentElement.cloneNode(true);
+  // Remove the toast and banner
+  const t = clone.querySelector('#status-toast'); if (t) t.remove();
+  const b = clone.querySelector('#active-letter-banner'); if (b) b.remove();
+  // Force all panels visible
+  clone.querySelectorAll('.tab-panel').forEach(p => p.classList.add('active'));
+  // Add export header
+  const styleNum = document.getElementById('style-number')?.value || 'export';
+  const html = '<!DOCTYPE html>\n<html lang="en">\n' + clone.innerHTML + '\n</html>';
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `techpack_${styleNum}_${new Date().toISOString().slice(0,10)}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('HTML exported!', 'success');
+}
+
+/* ═══════════════════════════════════════
+   INITIALIZATION
+   ═══════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', () => {
+  // Build letter rows for each tab
+  ['construction','sewing','wash','art1','art2','hardware'].forEach(buildLetterRow);
+
+  // Add one default colorway
+  addColorway();
+
+  // Pre-fill date
+  const dateField = document.getElementById('tech-date');
+  if (dateField) dateField.valueAsDate = new Date();
+
+  // Initial fit table
+  buildFitTable();
+
+  // Initial color maps
+  renderConstructionColorMap();
+  renderSewingColorMap();
+  renderHardwareColorMap();
+  renderArtColorTable('art1');
+  renderArtColorTable('art2');
+
+  // Add a default sewing callout
+  addSewingCallout();
+  addSewingCallout();
+
+  // Add a default hardware item
+  addHardwareCallout();
+
+  // Add a default distress row
+  addDistressRow();
+
+  // Add a default warning
+  addWarning();
+
+  showToast('Techpack creator ready', 'success');
+});
+</script>
+
+</body>
+</html>
