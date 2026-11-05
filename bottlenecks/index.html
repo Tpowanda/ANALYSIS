@@ -1,0 +1,2421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#080C10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>POWANDA — Apparel Go/No-Go System</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;600&family=Barlow:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#080C10;--surface:#0F1418;--card:#161C22;--border:#1E2830;
+  --orange:#FF6B1A;--amber:#FFB020;--teal:#0DCFBF;
+  --green:#22D46A;--red:#FF3B5C;--white:#EDF2F7;
+  --muted:#5A6A7A;--text:#B8C8D8;--blue:#63B3ED;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+button{touch-action:manipulation;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--white);font-family:'Barlow',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+/* PAGES */
+.page{display:none;min-height:100vh;animation:fadeIn .25s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* TOP BAR */
+.topbar{
+  background:rgba(8,12,16,0.97);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:500;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;height:54px;
+}
+.topbar-brand{
+  font-family:'Bebas Neue',sans-serif;font-size:1.25rem;
+  letter-spacing:3px;color:var(--orange);cursor:pointer;
+  border:none;background:none;
+}
+.topbar-nav{display:flex;gap:3px;flex-wrap:wrap;}
+.tnav{
+  background:none;border:1px solid transparent;color:var(--muted);
+  font-family:'IBM Plex Mono',monospace;font-size:10px;
+  letter-spacing:1.5px;text-transform:uppercase;
+  padding:7px 12px;cursor:pointer;border-radius:4px;transition:all .15s;
+}
+.tnav:hover{color:var(--white);border-color:var(--border);}
+.tnav.active{color:var(--orange);border-color:var(--orange);background:rgba(255,107,26,0.08);}
+
+/* ══ HOME ══ */
+.hero{
+  min-height:calc(100vh - 54px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 24px;
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,107,26,0.07) 0%,transparent 65%);
+  position:relative;overflow:hidden;
+}
+.hero-grid{
+  content:'';position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,107,26,0.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,107,26,0.025) 1px,transparent 1px);
+  background-size:44px 44px;pointer-events:none;
+}
+.thesis-tag{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--teal);
+  border:1px solid rgba(13,207,191,0.3);padding:5px 16px;border-radius:20px;
+  margin-bottom:28px;text-transform:uppercase;position:relative;z-index:1;
+}
+.hero-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(2.6rem,6vw,5.2rem);letter-spacing:4px;
+  text-align:center;line-height:1.05;max-width:860px;
+  position:relative;z-index:1;margin-bottom:10px;
+}
+.hero-title .ac1{color:var(--orange);}
+.hero-title .ac2{color:var(--teal);}
+.hero-sub{
+  font-size:clamp(13px,1.8vw,17px);color:var(--text);
+  text-align:center;max-width:660px;line-height:1.75;
+  margin-bottom:44px;position:relative;z-index:1;font-weight:300;
+}
+.hero-sub b{color:var(--amber);font-weight:600;}
+
+/* NAV BUTTON GRID — KEY FIX: pointer-events only on button itself */
+.nav-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:14px;max-width:880px;width:100%;
+  position:relative;z-index:1;margin-bottom:44px;
+}
+.nbtn{
+  background:var(--card);border:2px solid var(--border);
+  border-radius:12px;padding:26px 20px;cursor:pointer;
+  transition:transform .2s,border-color .2s,box-shadow .2s;
+  text-align:left;position:relative;overflow:hidden;
+  /* CRITICAL: no nested interactive children blocking clicks */
+}
+.nbtn:hover{transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+.nbtn.c1:hover{border-color:var(--orange);}
+.nbtn.c2:hover{border-color:var(--teal);}
+.nbtn.c3:hover{border-color:var(--amber);}
+.nbtn.c4:hover{border-color:var(--green);}
+.nbtn.c5:hover{border-color:var(--red);}
+.nbtn.c6:hover{border-color:var(--blue);}
+/* glow strip top */
+.nbtn::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;opacity:0;transition:opacity .2s;}
+.nbtn:hover::after{opacity:1;}
+.nbtn.c1::after{background:var(--orange);}
+.nbtn.c2::after{background:var(--teal);}
+.nbtn.c3::after{background:var(--amber);}
+.nbtn.c4::after{background:var(--green);}
+.nbtn.c5::after{background:var(--red);}
+.nbtn.c6::after{background:var(--blue);}
+/* all children pointer-events:none so click always registers on .nbtn */
+.nbtn *{pointer-events:none;}
+.nbtn-num{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;line-height:1;opacity:.2;margin-bottom:10px;}
+.nbtn.c1 .nbtn-num{color:var(--orange);}
+.nbtn.c2 .nbtn-num{color:var(--teal);}
+.nbtn.c3 .nbtn-num{color:var(--amber);}
+.nbtn.c4 .nbtn-num{color:var(--green);}
+.nbtn.c5 .nbtn-num{color:var(--red);}
+.nbtn.c6 .nbtn-num{color:var(--blue);}
+.nbtn-icon{font-size:26px;margin-bottom:8px;display:block;}
+.nbtn-title{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;margin-bottom:5px;}
+.nbtn.c1 .nbtn-title{color:var(--orange);}
+.nbtn.c2 .nbtn-title{color:var(--teal);}
+.nbtn.c3 .nbtn-title{color:var(--amber);}
+.nbtn.c4 .nbtn-title{color:var(--green);}
+.nbtn.c5 .nbtn-title{color:var(--red);}
+.nbtn.c6 .nbtn-title{color:var(--blue);}
+.nbtn-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+.nbtn-arrow{position:absolute;bottom:14px;right:16px;font-size:18px;color:var(--muted);transition:transform .2s,color .2s;}
+.nbtn:hover .nbtn-arrow{transform:translateX(4px);}
+.nbtn.c1:hover .nbtn-arrow{color:var(--orange);}
+.nbtn.c2:hover .nbtn-arrow{color:var(--teal);}
+.nbtn.c3:hover .nbtn-arrow{color:var(--amber);}
+.nbtn.c4:hover .nbtn-arrow{color:var(--green);}
+.nbtn.c5:hover .nbtn-arrow{color:var(--red);}
+.nbtn.c6:hover .nbtn-arrow{color:var(--blue);}
+
+/* IO BAR */
+.io-wrap{display:grid;grid-template-columns:1fr 48px 1fr;gap:14px;max-width:880px;width:100%;position:relative;z-index:1;}
+.io-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;}
+.io-title{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;margin-bottom:10px;text-transform:uppercase;}
+.io-inp .io-title{color:var(--teal);}
+.io-out .io-title{color:var(--amber);}
+.io-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);padding:5px 0;border-bottom:1px solid var(--border);}
+.io-item:last-child{border:none;}
+.io-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.io-inp .io-dot{background:var(--teal);}
+.io-out .io-dot{background:var(--amber);}
+.io-mid{display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--orange);}
+
+/* PAGE INNER */
+.page-inner{max-width:1080px;margin:0 auto;padding:36px 24px;}
+.page-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;border-bottom:1px solid var(--border);padding-bottom:22px;margin-bottom:32px;}
+.step-badge{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--teal);background:rgba(13,207,191,0.07);border:1px solid rgba(13,207,191,0.2);padding:4px 12px;border-radius:20px;display:inline-block;margin-bottom:10px;}
+.page-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.7rem,3.5vw,2.6rem);letter-spacing:3px;line-height:1.1;}
+.page-desc{font-size:13px;color:var(--text);line-height:1.7;max-width:580px;margin-top:7px;font-weight:300;}
+
+/* BACK BUTTON — pointer-events on itself only */
+.back-btn{
+  background:var(--card);border:1px solid var(--border);color:var(--muted);
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;
+  padding:8px 16px;border-radius:6px;cursor:pointer;white-space:nowrap;
+  transition:all .15s;flex-shrink:0;margin-top:4px;
+}
+.back-btn:hover{color:var(--white);border-color:var(--orange);}
+
+/* SECTION LABELS */
+.sec-title{font-family:'Bebas Neue',sans-serif;font-size:1.25rem;letter-spacing:2px;color:var(--orange);margin-bottom:5px;}
+.sec-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);margin-bottom:18px;text-transform:uppercase;}
+
+/* GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.divider{height:1px;background:var(--border);margin:28px 0;}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;}
+.card.t-orange{border-top:2px solid var(--orange);}
+.card.t-teal{border-top:2px solid var(--teal);}
+.card.t-amber{border-top:2px solid var(--amber);}
+.card.t-green{border-top:2px solid var(--green);}
+
+/* INFO / WARN BOXES */
+.info-box{background:rgba(13,207,191,0.04);border:1px solid rgba(13,207,191,0.15);border-left:3px solid var(--teal);border-radius:0 8px 8px 0;padding:14px 18px;font-size:12px;color:var(--text);line-height:1.7;}
+.info-box strong{color:var(--teal);}
+.warn-box{background:rgba(255,176,32,0.04);border:1px solid rgba(255,176,32,0.15);border-left:3px solid var(--amber);border-radius:0 8px 8px 0;padding:14px 18px;font-size:12px;color:var(--text);line-height:1.7;margin-bottom:20px;}
+.warn-box strong{color:var(--amber);}
+
+/* KPI CARDS */
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 14px;}
+.kpi-label{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:3px;}
+.kpi-val{font-family:'Bebas Neue',sans-serif;font-size:1.55rem;line-height:1;margin-bottom:4px;}
+.kpi-bar-wrap{height:3px;background:var(--border);border-radius:2px;margin:5px 0;}
+.kpi-bar{height:100%;border-radius:2px;transition:width .4s,background .4s;}
+.kpi-formula{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#2a3845;background:var(--surface);padding:4px 7px;border-radius:4px;border:1px solid var(--border);line-height:1.4;margin-top:4px;}
+
+/* LEARN BUTTON — explicit pointer-events:auto to override parent kpi-card if needed */
+.lbtn{
+  margin-top:7px;width:100%;background:none;
+  border:1px solid var(--border);color:var(--teal);
+  font-family:'IBM Plex Mono',monospace;font-size:9px;
+  letter-spacing:1px;padding:7px;border-radius:4px;cursor:pointer;
+  transition:all .15s;text-transform:uppercase;
+  pointer-events:auto !important;
+  position:relative;z-index:10;
+}
+.lbtn:hover{background:var(--teal);color:var(--bg);}
+
+/* SLIDERS */
+.sl-group{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;}
+.sl-group-title{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;color:var(--amber);margin-bottom:14px;}
+.sl-row{margin-bottom:14px;}
+.sl-row label{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:5px;}
+.sl-row label span{color:var(--white);}
+input[type=range]{width:100%;accent-color:var(--orange);cursor:pointer;}
+.sl-hint{font-size:9px;color:#2a3845;font-family:'IBM Plex Mono',monospace;margin-top:3px;letter-spacing:0.5px;line-height:1.4;}
+
+/* RESULT BOX */
+.res-box{background:#060A0E;border:1px solid var(--orange);border-radius:8px;padding:16px;text-align:center;}
+.res-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:5px;}
+.res-big{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;line-height:1;color:var(--orange);}
+.res-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:3px;}
+
+/* TABLE */
+.dtable{width:100%;border-collapse:collapse;}
+.dtable th{background:var(--surface);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);}
+.dtable td{padding:11px 12px;border-bottom:1px solid #0D1216;font-size:12px;color:var(--text);}
+.dtable tr:hover td{background:rgba(255,107,26,0.03);}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:3px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:1px;}
+.b-pass{background:rgba(34,212,106,0.12);color:var(--green);}
+.b-fail{background:rgba(255,59,92,0.12);color:var(--red);}
+.b-warn{background:rgba(255,176,32,0.12);color:var(--amber);}
+.vp{color:var(--red);font-family:'IBM Plex Mono',monospace;font-size:11px;}
+.vn{color:var(--green);font-family:'IBM Plex Mono',monospace;font-size:11px;}
+.vz{color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:11px;}
+
+/* SQL BLOCK */
+.sql-block{background:#060A0D;border:1px solid #182030;border-radius:8px;padding:16px 18px;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.9;color:#7A9AB8;overflow-x:auto;position:relative;}
+.sql-block .kw{color:#E06C75;}
+.sql-block .fn{color:#C678DD;}
+.sql-block .st{color:#98C379;}
+.sql-block .cm{color:#3D5268;font-style:italic;}
+.sql-block .tb{color:var(--teal);}
+.csql{position:absolute;top:10px;right:10px;background:#182030;border:none;color:var(--muted);font-size:9px;padding:3px 9px;border-radius:3px;cursor:pointer;font-family:'IBM Plex Mono',monospace;letter-spacing:1px;transition:all .15s;}
+.csql:hover{background:var(--teal);color:var(--bg);}
+
+/* FLOW ROW */
+.flow-row{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin:18px 0;}
+.flow-step{background:var(--card);border:1px solid var(--border);padding:16px 12px;text-align:center;position:relative;}
+.flow-step::after{content:'→';position:absolute;right:-10px;top:50%;transform:translateY(-50%);color:var(--orange);font-size:14px;z-index:1;background:var(--bg);padding:2px 0;}
+.flow-step:last-child::after{display:none;}
+.fl-icon{font-size:22px;margin-bottom:7px;}
+.fl-title{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;color:var(--orange);margin-bottom:3px;}
+.fl-sub{font-size:10px;color:var(--muted);line-height:1.4;}
+.fl-tag{margin-top:7px;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:1px;color:var(--teal);background:rgba(13,207,191,0.06);border:1px solid rgba(13,207,191,0.15);padding:2px 5px;border-radius:3px;display:inline-block;}
+
+/* CHART WRAP */
+.chart-wrap{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px;}
+.chart-title{font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;color:var(--white);margin-bottom:3px;}
+.chart-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);margin-bottom:14px;}
+.chart-sql{margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);background:var(--surface);border:1px solid var(--border);padding:7px 10px;border-radius:4px;line-height:1.6;}
+.chart-sql span{color:var(--teal);}
+
+/* STEP LIST */
+.slist{list-style:none;counter-reset:s;}
+.slist li{counter-increment:s;padding:11px 0 11px 42px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);line-height:1.6;position:relative;}
+.slist li:last-child{border:none;}
+.slist li::before{content:counter(s);position:absolute;left:0;top:11px;width:25px;height:25px;background:var(--orange);color:var(--bg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:13px;}
+.slist .hi{color:var(--teal);font-weight:600;}
+
+/* TAG */
+.tag{display:inline-block;background:rgba(255,107,26,0.1);border:1px solid rgba(255,107,26,0.25);color:var(--orange);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 8px;border-radius:3px;letter-spacing:1px;margin:2px;}
+.tag.t{background:rgba(13,207,191,0.1);border-color:rgba(13,207,191,0.25);color:var(--teal);}
+
+/* MODAL */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;align-items:center;justify-content:center;padding:20px;}
+.modal-ov.open{display:flex;}
+.modal{background:var(--card);border:1px solid var(--orange);border-radius:12px;padding:28px;max-width:640px;width:100%;max-height:84vh;overflow-y:auto;position:relative;animation:fadeIn .2s ease;}
+.mc{position:absolute;top:14px;right:16px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;}
+.mc:hover{color:var(--red);}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;color:var(--orange);margin-bottom:4px;}
+.modal-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:14px;display:block;}
+
+/* PROB TABLE */
+.prob-path{font-family:'IBM Plex Mono',monospace;font-size:11px;}
+.pp{color:var(--green);}
+.pf{color:var(--red);}
+
+/* PRES KPI ROW */
+.pres-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
+.pres-kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center;}
+.pres-val{font-family:'Bebas Neue',sans-serif;font-size:2rem;line-height:1;margin-bottom:4px;}
+.pres-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);}
+.pres-delta{font-family:'IBM Plex Mono',monospace;font-size:10px;margin-top:5px;color:var(--muted);}
+.pres-lever{margin-top:10px;padding-top:8px;border-top:1px solid var(--border);}
+.pres-lever-row{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--muted);margin-bottom:4px;align-items:center;}
+.pres-lever-row span:nth-child(2){font-size:10px;font-weight:600;}
+.pres-lever input[type=range]{width:100%;margin:0;}
+
+/* ══ RESPONSIVE — MOBILE FIRST — NO HORIZONTAL SCROLL ══ */
+/* Force all containers to fit viewport width */
+html, body { overflow-x: hidden; max-width: 100vw; }
+.page-inner, .hero, .nav-grid, .io-wrap, .g2, .g3, .g4,
+.pres-row, .flow-row, .card, .sl-group, .dtable,
+.chart-wrap, .sql-block { max-width: 100%; }
+
+@media(max-width:900px){
+  .nav-grid{ grid-template-columns:1fr 1fr; }
+  .g3{ grid-template-columns:1fr 1fr; }
+}
+
+@media(max-width:768px){
+  /* Core grid collapse */
+  .nav-grid, .g2, .g4 { grid-template-columns: 1fr; }
+  .g3{ grid-template-columns: 1fr 1fr; }
+  .io-wrap{ grid-template-columns: 1fr; gap: 10px; }
+  .io-mid{ transform: rotate(90deg); }
+  .flow-row{ grid-template-columns: 1fr; gap: 6px; }
+  .flow-step::after{ content:'↓'; right:auto; left:50%; top:auto; bottom:-8px; transform:translateX(-50%); }
+
+  /* Leadership KPI row — 2 col on tablet */
+  .pres-row{ grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* Page padding */
+  .page-inner{ padding: 16px 12px; }
+  .hero{ padding: 24px 12px; }
+
+  /* Typography scaling */
+  .hero-title{ font-size: clamp(1.8rem, 7vw, 3rem); letter-spacing: 2px; }
+  .hero-sub{ font-size: 13px; margin-bottom: 24px; }
+  .page-title{ font-size: clamp(1.4rem, 5vw, 2rem); }
+
+  /* Nav buttons compact */
+  .nbtn{ padding: 16px 12px; }
+  .nbtn-num{ font-size: 1.5rem; }
+  .nbtn-icon{ font-size: 20px; margin-bottom: 6px; }
+  .nbtn-title{ font-size: .9rem; }
+  .nbtn-desc{ font-size: 11px; }
+
+  /* KPI grid stays 2-col on tablet */
+  .kpi-val{ font-size: 1.3rem; }
+  .kpi-formula{ font-size: 8px; }
+
+  /* Sliders group */
+  .sl-group{ padding: 14px 10px; }
+
+  /* Charts master controls — 2 col */
+  #page-charts .card > div[style*="repeat(4"]{ display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 12px !important; }
+
+  /* Tables: scroll container, no overflow */
+  .card{ overflow: hidden; }
+  .dtable-wrap{ overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .dtable{ min-width: 480px; width: 100%; }
+
+  /* SQL blocks scroll inline */
+  .sql-block{ font-size: 9.5px; overflow-x: auto; }
+
+  /* Page header stacks */
+  .page-hdr{ flex-direction: column; gap: 10px; }
+  .back-btn{ align-self: flex-start; }
+
+  /* Modal full width */
+  .modal{ max-width: calc(100vw - 20px); border-radius: 8px; }
+  .modal-ov{ padding: 10px; }
+
+  /* Topbar hides desktop nav */
+  .topbar-nav{ display: none; }
+  #mob-menu-btn{ display: block !important; }
+
+  /* Charts — stack the 2-col chart grids */
+  #page-charts .g2, #page-pres .g2{ grid-template-columns: 1fr; }
+
+  /* Pres bottleneck grid */
+  #page-pres > .page-inner > div[style*="2fr 1fr"]{ display: grid !important; grid-template-columns: 1fr !important; }
+
+  /* Result boxes */
+  .res-big{ font-size: 1.9rem; }
+
+  /* IO wrap mid arrow */
+  .io-mid{ font-size: 20px; }
+
+  /* Step badge */
+  .step-badge{ font-size: 8px; }
+}
+
+@media(max-width:480px){
+  /* Phone: single column for everything */
+  .nav-grid, .g2, .g3, .g4, .pres-row{ grid-template-columns: 1fr; }
+  .io-wrap{ grid-template-columns: 1fr; }
+
+  /* KPI 2-col micro grid stays but smaller */
+  #page-kpi .g2{ grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* Typography */
+  .hero-title{ font-size: clamp(1.5rem, 8vw, 2.2rem); }
+  .pres-val{ font-size: 1.6rem; }
+  .res-big{ font-size: 1.6rem; }
+
+  /* Nav buttons single col */
+  .nbtn{ padding: 14px 12px; }
+
+  /* Charts controls single col */
+  #page-charts .card > div[style*="repeat(4"]{ grid-template-columns: 1fr 1fr !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="topbar-brand" onclick="nav('home')">T.POWANDA · GO/NO-GO</button>
+  <div class="topbar-nav">
+    <button class="tnav" id="tn-home"    onclick="nav('home')">Home</button>
+    <button class="tnav" id="tn-tasks"   onclick="nav('tasks')">① Tasks</button>
+    <button class="tnav" id="tn-sql"     onclick="nav('sql')">② SQL</button>
+    <button class="tnav" id="tn-collect" onclick="nav('collect')">③ Data</button>
+    <button class="tnav" id="tn-kpi"     onclick="nav('kpi')">④ KPIs</button>
+    <button class="tnav" id="tn-charts"  onclick="nav('charts')">⑤ Charts</button>
+    <button class="tnav" id="tn-pres"    onclick="nav('pres')">⑥ Present</button>
+  </div>
+  <!-- Mobile menu button (only visible on small screens) -->
+  <button id="mob-menu-btn" onclick="toggleMobMenu()" style="display:none;background:none;border:1px solid var(--border);color:var(--muted);padding:6px 10px;border-radius:4px;cursor:pointer;font-size:16px;line-height:1;">☰</button>
+</div>
+<!-- Mobile dropdown nav -->
+<div id="mob-nav" style="display:none;position:fixed;top:54px;left:0;right:0;z-index:490;background:rgba(8,12,16,0.98);border-bottom:1px solid var(--border);padding:10px 16px;flex-direction:column;gap:4px;">
+  <button class="tnav" style="text-align:left;width:100%;padding:10px 14px;" onclick="nav('home');toggleMobMenu()">🏠 Home</button>
+  <button class="tnav" style="text-align:left;width:100%;padding:10px 14px;" onclick="nav('tasks');toggleMobMenu()">① Identify Tasks</button>
+  <button class="tnav" style="text-align:left;width:100%;padding:10px 14px;" onclick="nav('sql');toggleMobMenu()">② SQL Data Mining</button>
+  <button class="tnav" style="text-align:left;width:100%;padding:10px 14px;" onclick="nav('collect');toggleMobMenu()">③ Collect Data</button>
+  <button class="tnav" style="text-align:left;width:100%;padding:10px 14px;" onclick="nav('kpi');toggleMobMenu()">④ Measure KPIs</button>
+  <button class="tnav" style="text-align:left;width:100%;padding:10px 14px;" onclick="nav('charts');toggleMobMenu()">⑤ Analyze Charts</button>
+  <button class="tnav" style="text-align:left;width:100%;padding:10px 14px;" onclick="nav('pres');toggleMobMenu()">⑥ Leadership View</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     HOME
+═══════════════════════════════════════════════ -->
+<div class="page active" id="page-home">
+<div class="hero">
+  <div class="hero-grid"></div>
+
+  <div class="thesis-tag">Apparel Commercialization · KPI Framework · T. Powanda</div>
+
+  <h1 class="hero-title">
+    HOW TO <span class="ac1">QUANTIFY</span><br>
+    APPROVAL MILESTONES<br>
+    &amp; ELIMINATE <span class="ac2">BOTTLENECKS</span><br>
+    IN REAL TIME
+  </h1>
+
+  <p class="hero-sub">
+    Every delayed garment approval cascades into a missed warehouse date, a broken social calendar, and lost revenue.
+    This system turns the <b>chaotic approval process</b> into measurable data —
+    so leadership can make <b>informed Go/No-Go decisions</b> before catastrophic delays occur.
+  </p>
+
+  <div class="nav-grid">
+    <div class="nbtn c1" onclick="nav('tasks')">
+      <div class="nbtn-num">01</div>
+      <div class="nbtn-icon">📋</div>
+      <div class="nbtn-title">IDENTIFY TASKS</div>
+      <div class="nbtn-desc">Break commercialization into independent, measurable milestones by fabric / style / social delivery</div>
+      <div class="nbtn-arrow">→</div>
+    </div>
+    <div class="nbtn c2" onclick="nav('sql')">
+      <div class="nbtn-num">02</div>
+      <div class="nbtn-icon">🗄️</div>
+      <div class="nbtn-title">SQL DATA MINING</div>
+      <div class="nbtn-desc">Ready-to-run Oracle SQL queries that pull live approval data from Flex PLM automatically</div>
+      <div class="nbtn-arrow">→</div>
+    </div>
+    <div class="nbtn c3" onclick="nav('collect')">
+      <div class="nbtn-num">03</div>
+      <div class="nbtn-icon">📥</div>
+      <div class="nbtn-title">COLLECT DATA</div>
+      <div class="nbtn-desc">Record scheduled vs actual dates, pass/fail outcomes, and minutes spent per approval test</div>
+      <div class="nbtn-arrow">→</div>
+    </div>
+    <div class="nbtn c4" onclick="nav('kpi')">
+      <div class="nbtn-num">04</div>
+      <div class="nbtn-icon">⚡</div>
+      <div class="nbtn-title">MEASURE KPIs</div>
+      <div class="nbtn-desc">Calculate on-time rate, fail rate, efficiency, and updated lead time from live Flex PLM data</div>
+      <div class="nbtn-arrow">→</div>
+    </div>
+    <div class="nbtn c5" onclick="nav('charts')">
+      <div class="nbtn-num">05</div>
+      <div class="nbtn-icon">📈</div>
+      <div class="nbtn-title">ANALYZE CHARTS</div>
+      <div class="nbtn-desc">Interactive probability trees, cost analysis, and schedule variance — adjust inputs, see live results</div>
+      <div class="nbtn-arrow">→</div>
+    </div>
+    <div class="nbtn c6" onclick="nav('pres')">
+      <div class="nbtn-num">06</div>
+      <div class="nbtn-icon">🎯</div>
+      <div class="nbtn-title">LEADERSHIP VIEW</div>
+      <div class="nbtn-desc">One-page executive summary with live KPIs, cost impact, and Go/No-Go decision output</div>
+      <div class="nbtn-arrow">→</div>
+    </div>
+  </div>
+
+  <!-- I/O BAR -->
+  <div class="io-wrap">
+    <div class="io-box io-inp">
+      <div class="io-title">📥 INPUTS — What Goes In</div>
+      <div class="io-item"><span class="io-dot"></span>Flex PLM Approval Records (Pass/Fail)</div>
+      <div class="io-item"><span class="io-dot"></span>Scheduled vs Actual Milestone Dates</div>
+      <div class="io-item"><span class="io-dot"></span>Minutes Spent Per Test</div>
+      <div class="io-item"><span class="io-dot"></span>Wage Rate ($/hour)</div>
+      <div class="io-item"><span class="io-dot"></span>Historical Pass Rate % by Task Type</div>
+      <div class="io-item"><span class="io-dot"></span>Total Styles Scheduled Per Season</div>
+    </div>
+    <div class="io-mid">⟶</div>
+    <div class="io-box io-out">
+      <div class="io-title">📤 OUTPUTS — What You Get</div>
+      <div class="io-item"><span class="io-dot"></span>On-Time Rate % Speedometer</div>
+      <div class="io-item"><span class="io-dot"></span>Avg Fail Per Style Rate</div>
+      <div class="io-item"><span class="io-dot"></span>Schedule Variance (Days Behind)</div>
+      <div class="io-item"><span class="io-dot"></span>2-Test vs 3-Test Cost Difference</div>
+      <div class="io-item"><span class="io-dot"></span>Probability of Pass After N Tests</div>
+      <div class="io-item"><span class="io-dot"></span>Updated Order Lead Time (OTD)</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     TASKS
+═══════════════════════════════════════════════ -->
+<div class="page" id="page-tasks">
+<div class="page-inner">
+  <div class="page-hdr">
+    <div>
+      <div class="step-badge">STEP 01 · INPUTS</div>
+      <h2 class="page-title">IDENTIFY <span style="color:var(--orange)">INDEPENDENT TASKS</span></h2>
+      <p class="page-desc">Before you can measure anything, break the apparel development calendar into individual trackable tasks — each assigned to one category: Fabric, Style, or Social Delivery.</p>
+    </div>
+    <button class="back-btn" onclick="nav('home')">← HOME</button>
+  </div>
+
+  <div class="info-box" style="margin-bottom:26px">
+    <strong>💡 WHY THIS MATTERS:</strong> When everything is lumped into "garment development," you can't see what's causing delays. By isolating tasks you turn chaos into data. Each row in the table below is one measurable thing that can be tracked and improved — and stored as one SQL row.
+  </div>
+
+  <div class="sec-title">COMMERCIALIZATION PIPELINE</div>
+  <div style="margin-bottom:6px">
+    <span style="
+      font-family:'Bebas Neue',sans-serif;
+      font-size:clamp(1.6rem,3.5vw,2.4rem);
+      letter-spacing:3px;
+      color:var(--orange);
+      background:rgba(255,107,26,0.08);
+      border:2px solid rgba(255,107,26,0.35);
+      border-radius:8px;
+      padding:8px 22px;
+      display:inline-block;
+      line-height:1.1;
+    ">34 INDEPENDENT TASKS ACROSS 5 DEVELOPMENT PHASES</span>
+  </div>
+  <div style="
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:2px;
+    color:var(--teal);
+    margin-bottom:20px;
+    padding-left:4px;
+  ">(EACH WITH THEIR OWN SQL DATA)</div>
+  <div class="flow-row" style="margin-bottom:30px">
+    <div class="flow-step"><div class="fl-icon">🎨</div><div class="fl-title">PRE-SEASON</div><div class="fl-sub">Tasks 1–8: Ideation, themes, SKU plan, fabric rationalization</div><div class="fl-tag">FLX_STYLE_SEASON</div></div>
+    <div class="flow-step"><div class="fl-icon">🔬</div><div class="fl-title">DEVELOPMENT</div><div class="fl-sub">Tasks 9–22: Line reviews, tech packs, proto fittings, approvals</div><div class="fl-tag">FLX_APPROVAL_STEP</div></div>
+    <div class="flow-step"><div class="fl-icon">💰</div><div class="fl-title">COSTING</div><div class="fl-sub">Tasks 14a–14d: Preliminary through final costing locked</div><div class="fl-tag">FLX_TASK_ATTR</div></div>
+    <div class="flow-step"><div class="fl-icon">📦</div><div class="fl-title">PRODUCTION</div><div class="fl-sub">Tasks 24–34: Long lead buys, bulk approvals, x-vessel date</div><div class="fl-tag">FLX_CALENDAR</div></div>
+    <div class="flow-step"><div class="fl-icon">📱</div><div class="fl-title">GO-TO-MARKET</div><div class="fl-sub">Social calendar, warehouse receipt, customer start ship</div><div class="fl-tag">FLX_MILESTONE</div></div>
+  </div>
+
+  <div class="sec-title">TASK 22 DETAIL — SAM'S CLUB FALL 27 DENIM #6</div>
+  <div class="sec-sub">Fundamentals Recycled Materials · Each sub-task is independently measurable</div>
+  <div class="g2">
+    <table class="dtable">
+      <thead><tr><th>Code</th><th>Description</th><th>Category</th><th>SQL Table</th></tr></thead>
+      <tbody>
+        <tr><td style="color:var(--teal);font-family:'IBM Plex Mono',monospace;font-size:11px">22a</td><td>&lt;50% Recycled Materials</td><td><span class="tag">FABRIC</span></td><td style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)">FLX_APPROVAL_STEP</td></tr>
+        <tr><td style="color:var(--teal);font-family:'IBM Plex Mono',monospace;font-size:11px">22b</td><td>Color Standard Approvals</td><td><span class="tag">STYLE</span></td><td style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)">FLX_APPROVAL_STEP</td></tr>
+        <tr><td style="color:var(--teal);font-family:'IBM Plex Mono',monospace;font-size:11px">22c</td><td>Membrane Testing — Outerlayer</td><td><span class="tag">FABRIC</span></td><td style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)">FLX_APPROVAL_STEP</td></tr>
+        <tr><td style="color:var(--teal);font-family:'IBM Plex Mono',monospace;font-size:11px">22d</td><td>Membrane Testing — Mid Layer</td><td><span class="tag">FABRIC</span></td><td style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)">FLX_APPROVAL_STEP</td></tr>
+        <tr><td style="color:var(--teal);font-family:'IBM Plex Mono',monospace;font-size:11px">22e</td><td>Wicking GOTS 5.0</td><td><span class="tag">FABRIC</span></td><td style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)">FLX_APPROVAL_STEP</td></tr>
+        <tr><td style="color:var(--teal);font-family:'IBM Plex Mono',monospace;font-size:11px">22f</td><td>Water Repellency &lt;70% Bio Carbon</td><td><span class="tag">FABRIC</span></td><td style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)">FLX_APPROVAL_STEP</td></tr>
+      </tbody>
+    </table>
+    <div class="card t-orange">
+      <div class="sec-title" style="font-size:1rem">WHAT MAKES A TASK INDEPENDENT?</div>
+      <ul class="slist" style="margin-top:10px">
+        <li>It has <span class="hi">multiple itemized data points</span> — each line item is individually tracked<br>
+          <div style="
+            margin-top:8px;
+            background:#060A0D;
+            border:1px solid rgba(13,207,191,0.25);
+            border-radius:6px;
+            padding:10px 14px;
+            font-family:'IBM Plex Mono',monospace;
+            font-size:10px;
+            line-height:1.9;
+            color:#8BA6C0;
+          ">
+            <span style="color:var(--amber);font-size:9px;letter-spacing:1.5px">PASS/FAIL KPI FORMULA</span><br>
+            <span style="color:var(--teal)">Pass or Fail KPI</span> =<br>
+            &nbsp;&nbsp;( 1 − <span style="color:var(--red)">failed line item</span> ÷ <span style="color:var(--orange)">Total Tests per milestone</span> )<br>
+            &nbsp;&nbsp;÷ <span style="color:var(--orange)">Total Tests per milestone</span><br>
+            &nbsp;&nbsp;= <span style="color:var(--green)">% outcome</span>
+          </div>
+        </li>
+        <li>It has a <span class="hi">scheduled date</span> in the PLM calendar</li>
+        <li>It belongs to <span class="hi">one fabric, style, or social deliverable</span></li>
+        <li>Delays in it directly affect a <span class="hi">downstream delivery date</span></li>
+        <li>It stores as <span class="hi">one row in FLX_APPROVAL_STEP</span> in SQL</li>
+      </ul>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:28px">
+    <div class="nbtn c2" style="display:inline-block;max-width:300px;margin:0 auto" onclick="nav('sql')">
+      <div class="nbtn-icon">🗄️</div>
+      <div class="nbtn-title">NEXT: SQL DATA MINING →</div>
+      <div class="nbtn-desc">See the Oracle SQL queries that pull live Flex PLM data</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     DATA COLLECTION
+═══════════════════════════════════════════════ -->
+<div class="page" id="page-collect">
+<div class="page-inner">
+  <div class="page-hdr">
+    <div>
+      <div class="step-badge">STEP 03 · DATA COLLECTION</div>
+      <h2 class="page-title">COLLECT &amp; RECORD <span style="color:var(--teal)">MILESTONE DATA</span></h2>
+      <p class="page-desc">For each independent task you need exactly four pieces of information. These four data points are everything needed to calculate every KPI in the dashboard.</p>
+    </div>
+    <button class="back-btn" onclick="nav('home')">← HOME</button>
+  </div>
+
+  <div class="sec-title">THE 4 DATA POINTS PER TASK</div>
+  <div class="sec-sub">These 4 columns feed ALL outputs — every chart, every KPI, every probability score</div>
+  <div class="g4" style="margin-bottom:28px">
+    <div class="card t-teal">
+      <div style="font-size:26px;margin-bottom:8px">📅</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;color:var(--teal);margin-bottom:6px">① SCHEDULED DATE</div>
+      <div style="font-size:12px;color:var(--text);line-height:1.6">The date the PLM calendar says this test should be done. This is your baseline.</div>
+      <div class="kpi-formula" style="margin-top:8px">COL: scheduled_date<br>TABLE: FLX_APPROVAL_STEP</div>
+    </div>
+    <div class="card t-orange">
+      <div style="font-size:26px;margin-bottom:8px">📆</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;color:var(--orange);margin-bottom:6px">② ACTUAL DATE</div>
+      <div style="font-size:12px;color:var(--text);line-height:1.6">When the test was actually completed. Subtract from scheduled date to get variance.</div>
+      <div class="kpi-formula" style="margin-top:8px">COL: actual_date<br>TABLE: FLX_APPROVAL_STEP</div>
+    </div>
+    <div class="card t-amber">
+      <div style="font-size:26px;margin-bottom:8px">✅</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;color:var(--amber);margin-bottom:6px">③ PASS / FAIL</div>
+      <div style="font-size:12px;color:var(--text);line-height:1.6">Did the test pass or fail? Builds the historical pass rate used in probability trees.</div>
+      <div class="kpi-formula" style="margin-top:8px">COL: approval_status<br>TABLE: FLX_APPROVAL_STEP</div>
+    </div>
+    <div class="card t-green">
+      <div style="font-size:26px;margin-bottom:8px">⏱️</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;color:var(--green);margin-bottom:6px">④ MINUTES SPENT</div>
+      <div style="font-size:12px;color:var(--text);line-height:1.6">How long did this test take? Multiply by wage rate to calculate labor cost per test.</div>
+      <div class="kpi-formula" style="margin-top:8px">COL: actual_minutes<br>TABLE: FLX_APPROVAL_STEP</div>
+    </div>
+  </div>
+
+  <div class="sec-title">SAMPLE DATA — TASK 22 SERIES</div>
+  <div class="sec-sub">Click any highlighted row to see how each data point becomes a KPI output</div>
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:22px">
+    <div class="dtable-wrap"><table class="dtable">
+      <thead>
+        <tr><th>Task</th><th>Description</th><th>① Sched</th><th>② Actual</th><th>③ Pass/Fail</th><th>④ Min</th><th>→ Variance</th><th>→ Cost @$50</th></tr>
+      </thead>
+      <tbody>
+        <tr onclick="openMod('mod-22a')" style="cursor:pointer">
+          <td style="color:var(--teal);font-family:'IBM Plex Mono',monospace;font-size:11px">22a</td><td>&lt;50% Recycled</td><td>Apr 12</td><td>Apr 12</td><td><span class="badge b-pass">✓ PASS</span></td><td>32</td><td><span class="vz">0 days</span></td><td style="color:var(--green);font-family:'IBM Plex Mono',monospace">$26.67</td>
+        </tr>
+        <tr onclick="openMod('mod-22b')" style="cursor:pointer">
+          <td style="color:var(--teal);font-family:'IBM Plex Mono',monospace;font-size:11px">22b</td><td>Color Standard</td><td>Apr 22</td><td>Apr 25</td><td><span class="badge b-fail">✗ FAIL 78%</span></td><td>11</td><td><span class="vp">+3 days</span></td><td style="color:var(--red);font-family:'IBM Plex Mono',monospace">$9.17</td>
+        </tr>
+        <tr onclick="openMod('mod-22c')" style="cursor:pointer">
+          <td style="color:var(--teal);font-family:'IBM Plex Mono',monospace;font-size:11px">22c</td><td>Membrane — Outerlayer</td><td>May 3</td><td>May 2</td><td><span class="badge b-fail">✗ FAIL 62%</span></td><td>45</td><td><span class="vn">-1 day</span></td><td style="color:var(--red);font-family:'IBM Plex Mono',monospace">$37.50</td>
+        </tr>
+        <tr>
+          <td style="color:var(--teal);font-family:'IBM Plex Mono',monospace;font-size:11px">22d</td><td>Membrane — Mid Layer</td><td>May 3</td><td>May 3</td><td><span class="badge b-pass">✓ PASS</span></td><td>52</td><td><span class="vz">0 days</span></td><td style="color:var(--green);font-family:'IBM Plex Mono',monospace">$43.33</td>
+        </tr>
+        <tr>
+          <td style="color:var(--teal);font-family:'IBM Plex Mono',monospace;font-size:11px">22e</td><td>Wicking GOTS 5.0</td><td>May 8</td><td>May 10</td><td><span class="badge b-pass">✓ PASS</span></td><td>24</td><td><span class="vp">+2 days</span></td><td style="color:var(--green);font-family:'IBM Plex Mono',monospace">$20.00</td>
+        </tr>
+        <tr>
+          <td style="color:var(--teal);font-family:'IBM Plex Mono',monospace;font-size:11px">22f</td><td>Water Repellency</td><td>May 11</td><td>May 14</td><td><span class="badge b-pass">✓ PASS</span></td><td>25</td><td><span class="vp">+3 days</span></td><td style="color:var(--green);font-family:'IBM Plex Mono',monospace">$20.83</td>
+        </tr>
+      </tbody>
+    </table>
+  </div><!-- /dtable-wrap -->
+  </div><!-- /card -->
+  <div class="info-box">
+    <strong>💡 TIP:</strong> Click the highlighted rows (22a, 22b, 22c) to see a popup explaining exactly how each data point becomes a KPI output. The → columns are calculated automatically from the 4 inputs. In the real system, SQL does this on thousands of rows.
+  </div>
+  <div style="text-align:center;margin-top:28px">
+    <div class="nbtn c4" style="display:inline-block;max-width:300px;margin:0 auto" onclick="nav('kpi')">
+      <div class="nbtn-icon">⚡</div>
+      <div class="nbtn-title">NEXT: MEASURE KPIs →</div>
+      <div class="nbtn-desc">See how 4 data points become 7 performance indicators</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     KPIs
+═══════════════════════════════════════════════ -->
+<div class="page" id="page-kpi">
+<div class="page-inner">
+  <div class="page-hdr">
+    <div>
+      <div class="step-badge">STEP 04 · OUTPUTS</div>
+      <h2 class="page-title">MILESTONE <span style="color:var(--amber)">SPEEDOMETERS</span></h2>
+      <p class="page-desc">Each KPI updates live from every slider. Pass Rate sliders drive On-Time Rate &amp; Completion Rate. Wage + Test Minutes drive all cost and lead time outputs. Every slider affects something.</p>
+    </div>
+    <button class="back-btn" onclick="nav('home')">← HOME</button>
+  </div>
+
+  <div class="warn-box">
+    <strong>⚡ BOTTLENECK ANALYSIS ENGINE — 3 TRIGGERS:</strong>&nbsp;
+    ① <strong style="color:var(--orange)">Pass Rate Avg</strong> (T1+T2)÷2 &gt; 75% = GO · ≤ 80% raises CAUTION flag. &nbsp;
+    ② <strong style="color:var(--orange)">Test Minutes Avg</strong> (T1+T2+T3)÷3 ≥ 180 min = CAUTION. &nbsp;
+    ③ <strong style="color:var(--orange)">Schedule Variance</strong> cascades sliders: PR1, PR2, T1, T2, T3 all move together. Task Efficiency updates with avg test time.
+  </div>
+
+  <div class="g2">
+    <!-- LEFT: KPI CARDS — Lead Time first, then 2-col grid -->
+    <div>
+      <div class="sec-title">7 KPI OUTPUTS</div>
+      <div class="sec-sub">All calculated live from slider inputs · every slider affects at least one KPI</div>
+
+      <!-- UPDATED ORDER LEAD TIME — TOP / FULL WIDTH -->
+      <div class="kpi-card" style="margin-bottom:10px;border:2px solid var(--red);background:rgba(255,59,92,0.04)">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div>
+            <div class="kpi-label" style="color:var(--red)">📦 UPDATED ORDER LEAD TIME</div>
+            <div class="kpi-val" id="k-lead" style="color:var(--red);font-size:1.9rem">+8.00 DAYS</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:4px">DRIVEN BY:</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text);line-height:1.8">
+              Variance Days slider<br>+ Test 1/2/3 minutes<br>+ Pass Rate T1 (fail penalty)
+            </div>
+          </div>
+        </div>
+        <div class="kpi-bar-wrap" style="margin:10px 0"><div class="kpi-bar" id="kb-lead" style="width:80%;background:var(--red)"></div></div>
+        <div class="kpi-formula">= Variance Days + ( (T1+T2+T3 min ÷ 60 ÷ 8hrs) × (1 − Pass Rate T1) ) · TABLE: FLX_APPROVAL_STEP · FLX_CALENDAR</div>
+        <button class="lbtn" style="margin-top:8px" onclick="openMod('mod-kpi-lead')">LEARN MORE ↗</button>
+      </div>
+
+      <!-- CORRELATION INDICATOR -->
+      <div style="background:linear-gradient(90deg,rgba(13,207,191,0.06),rgba(255,59,92,0.06));border:1px solid rgba(13,207,191,0.2);border-radius:8px;padding:10px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted)">KEY CORRELATION</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--teal)">&#8593; Completion Rate</span>
+          <span style="color:var(--muted)">&#8594;</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--red)">&#8595; Lead Time &#8594; +0.00</span>
+          <span style="color:var(--muted)">&amp;</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--amber)">&#8595; Schedule Variance</span>
+        </div>
+        <div id="corr-meter" style="font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:2px;color:var(--green)">HEALTHY &#10003;</div>
+      </div>
+
+      <!-- 2-COL GRID FOR REMAINING 6 KPIs -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+
+        <!-- 2-TEST LABOR COST — col 1 -->
+        <div class="kpi-card" style="border-top:2px solid var(--teal)">
+          <div class="kpi-label">💰 2-Test Labor Cost</div>
+          <div class="kpi-val" id="k-cost2" style="color:var(--teal)">$79.17</div>
+          <div class="kpi-bar-wrap"><div class="kpi-bar" id="kb-cost2" style="width:55%;background:var(--teal)"></div></div>
+          <div class="kpi-formula">= (T1 + T2 mins) ÷ 60 × Wage Rate</div>
+          <button class="lbtn" onclick="nav('charts')">SEE CHARTS ↗</button>
+        </div>
+
+        <!-- 3-TEST LABOR COST — col 2 -->
+        <div class="kpi-card" style="border-top:2px solid var(--amber)">
+          <div class="kpi-label">💰 3-Test Labor Cost</div>
+          <div class="kpi-val" id="k-cost3" style="color:var(--amber)">$112.50</div>
+          <div class="kpi-bar-wrap"><div class="kpi-bar" id="kb-cost3" style="width:70%;background:var(--amber)"></div></div>
+          <div class="kpi-formula">= (T1 + T2 + T3 mins) ÷ 60 × Wage Rate</div>
+          <button class="lbtn" onclick="nav('charts')">SEE CHARTS ↗</button>
+        </div>
+
+        <!-- ON-TIME RATE — col 1 -->
+        <div class="kpi-card">
+          <div class="kpi-label">On-Time Rate</div>
+          <div class="kpi-val" id="k-ontime" style="color:var(--green)">38.00%</div>
+          <div class="kpi-bar-wrap"><div class="kpi-bar" id="kb-ontime" style="width:38%;background:var(--green)"></div></div>
+          <div class="kpi-formula">= Pass Rate Test 1 %<br>(tasks approved on first attempt = on-time)</div>
+          <button class="lbtn" onclick="openMod('mod-kpi-ontime')">LEARN MORE ↗</button>
+        </div>
+
+        <!-- COMPLETION RATE — col 2 -->
+        <div class="kpi-card">
+          <div class="kpi-label">Completion Rate</div>
+          <div class="kpi-val" id="k-complete" style="color:var(--teal)">62.96%</div>
+          <div class="kpi-bar-wrap"><div class="kpi-bar" id="kb-complete" style="width:63%;background:var(--teal)"></div></div>
+          <div class="kpi-formula">= T1% + (1−T1%) × T2%<br>(tasks resolved in 1 or 2 tests)</div>
+          <button class="lbtn" onclick="openMod('mod-kpi-complete')">LEARN MORE ↗</button>
+        </div>
+
+        <!-- AVG FAIL / STYLE — col 1 -->
+        <div class="kpi-card">
+          <div class="kpi-label">Avg Fail / Style</div>
+          <div class="kpi-val" id="k-fail" style="color:var(--orange)">0.33</div>
+          <div class="kpi-bar-wrap"><div class="kpi-bar" id="kb-fail" style="width:33%;background:var(--orange)"></div></div>
+          <div class="kpi-formula">= Failed Tasks ÷ Total Tasks Scheduled</div>
+          <button class="lbtn" onclick="openMod('mod-kpi-fail')">LEARN MORE ↗</button>
+        </div>
+
+        <!-- TASK EFFICIENCY — col 2 -->
+        <div class="kpi-card">
+          <div class="kpi-label">Task Efficiency</div>
+          <div class="kpi-val" id="k-eff" style="color:var(--amber)">3.84</div>
+          <div class="kpi-bar-wrap"><div class="kpi-bar" id="kb-eff" style="width:58%;background:var(--amber)"></div></div>
+          <div class="kpi-formula">= 60 ÷ Avg Test Min · Avg=(T1+T2+T3)÷3 · Higher avg min = fewer tasks/hr</div>
+          <button class="lbtn" onclick="openMod('mod-kpi-eff')">LEARN MORE ↗</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT: SLIDERS — reordered: Wage → Tests → Pass Rates → Variance → Fails -->
+    <div>
+      <div class="sl-group">
+        <div class="sl-group-title">⚙️ GLOBAL INPUT CONTROLS</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px;font-family:'IBM Plex Mono',monospace">Every slider drives at least one KPI card ↗</div>
+
+        <!-- BOTTLENECK ANALYSIS PANEL -->
+        <div class="res-box" style="margin-bottom:14px;border-color:var(--teal);padding:12px 16px">
+          <div class="res-lbl">LIVE BOTTLENECK ANALYSIS</div>
+          <div id="gonogo" style="font-family:'Bebas Neue',sans-serif;font-size:2.4rem;line-height:1.05;color:var(--green)">GO ✓</div>
+          <div id="gonogo-r" style="font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:3px">On-time rate acceptable · Variance within tolerance</div>
+          <!-- Live trigger readouts -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-align:center">
+              <div style="color:var(--muted);letter-spacing:1px;margin-bottom:2px">PASS RATE AVG</div>
+              <div id="gng-pr-avg" style="color:var(--white);font-size:11px">45.0%</div>
+              <div style="color:var(--muted);font-size:8px">&gt;75% = GO · ≤80% = CAUTION</div>
+            </div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-align:center">
+              <div style="color:var(--muted);letter-spacing:1px;margin-bottom:2px">TEST MIN AVG</div>
+              <div id="gng-min-avg" style="color:var(--white);font-size:11px">45.0 min</div>
+              <div style="color:var(--muted);font-size:8px">&gt;60 min = CAUTION</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WAGE RATE — TOP -->
+        <div style="background:rgba(255,176,32,0.05);border:1px solid rgba(255,176,32,0.2);border-radius:6px;padding:10px 12px;margin-bottom:14px">
+          <div class="sl-row" style="margin-bottom:0">
+            <label style="color:var(--amber)">💰 WAGE RATE ($/hr) <span id="l-wage">$50</span></label>
+            <input type="range" min="25" max="150" value="50" step="5" oninput="updateKPIs()" id="s-wage">
+            <div class="sl-hint">Drives: 2-Test Cost, 3-Test Cost, Lead Time · SQL: Manual input or HR system</div>
+          </div>
+        </div>
+
+        <!-- TEST MINUTES -->
+        <div style="background:rgba(13,207,191,0.04);border:1px solid rgba(13,207,191,0.15);border-radius:6px;padding:10px 12px;margin-bottom:14px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--teal);margin-bottom:10px">⏱ TEST MINUTES — drives costs &amp; lead time · <span style="color:var(--amber)">CAUTION when avg (T1+T2+T3)÷3 &gt; 60 min · Also cascades from Variance slider ↓</span></div>
+          <div class="sl-row">
+            <label>TEST 1 MINUTES <span id="l-t1">45 min</span></label>
+            <input type="range" min="10" max="120" value="45" step="1" oninput="updateKPIs()" id="s-t1">
+            <div class="sl-hint">Drives: 2-Test Cost, 3-Test Cost, Lead Time, Efficiency · SQL: AVG(actual_minutes) WHERE test_number=1</div>
+          </div>
+          <div class="sl-row">
+            <label>TEST 2 MINUTES <span id="l-t2">50 min</span></label>
+            <input type="range" min="10" max="120" value="50" step="1" oninput="updateKPIs()" id="s-t2">
+            <div class="sl-hint">Drives: 2-Test Cost, 3-Test Cost, Lead Time, Efficiency · SQL: AVG(actual_minutes) WHERE test_number=2</div>
+          </div>
+          <div class="sl-row" style="margin-bottom:0">
+            <label>TEST 3 MINUTES <span id="l-t3">40 min</span></label>
+            <input type="range" min="10" max="120" value="40" step="1" oninput="updateKPIs()" id="s-t3">
+            <div class="sl-hint">Drives: 3-Test Cost, Lead Time, Efficiency · SQL: AVG(actual_minutes) WHERE test_number=3</div>
+          </div>
+        </div>
+
+        <!-- PASS RATES -->
+        <div style="background:rgba(255,107,26,0.04);border:1px solid rgba(255,107,26,0.15);border-radius:6px;padding:10px 12px;margin-bottom:14px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--orange);margin-bottom:10px">📊 PASS RATES — drives On-Time Rate &amp; Completion Rate</div>
+          <div class="sl-row">
+            <label>PASS RATE TEST 1 <span id="l-pr1">38%</span> <span style="font-size:8px;color:var(--orange);margin-left:4px">(auto-set by variance)</span></label>
+            <input type="range" min="1" max="100" value="38" step="1" oninput="updateKPIs()" id="s-pr1" style="opacity:0.85">
+            <div class="sl-hint">Drives: On-Time Rate, Completion Rate, Lead Time penalty · SQL: pass_rate_pct FROM FLX_APPROVAL_STEP WHERE test_number=1</div>
+          </div>
+          <div class="sl-row" style="margin-bottom:0">
+            <label>PASS RATE TEST 2 <span id="l-pr2">52%</span> <span style="font-size:8px;color:var(--orange);margin-left:4px">(auto-set by variance)</span></label>
+            <input type="range" min="1" max="100" value="52" step="1" oninput="updateKPIs()" id="s-pr2" style="opacity:0.85">
+            <div class="sl-hint">Drives: Completion Rate · <strong style="color:var(--amber)">CAUTION when (PR1+PR2)÷2 ≤ 80% · GO when avg &gt; 75%</strong> · SQL: pass_rate_pct FROM FLX_APPROVAL_STEP WHERE test_number=2</div>
+          </div>
+        </div>
+        <!-- Hidden s-fails input — driven by onVarianceChange, never shown to user -->
+        <input type="hidden" id="s-fails" value="2">
+        <!-- SCHEDULE (variance only — fails slider removed) -->
+        <div style="background:rgba(255,59,92,0.04);border:1px solid rgba(255,59,92,0.15);border-radius:6px;padding:10px 12px;margin-bottom:14px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--red);margin-bottom:10px">📅 SCHEDULE DATA — drives Lead Time &amp; Fail Rate</div>
+          <div class="sl-row">
+            <label style="color:var(--orange);font-weight:700">📅 SCHEDULE VARIANCE (days) <span id="l-var" style="color:var(--white)">+8.00</span></label>
+            <input type="range" min="-5" max="30" value="8" step="0.25" oninput="onVarianceChange()" id="s-var" style="accent-color:var(--orange)">
+            <div class="sl-hint" style="color:var(--orange);opacity:0.8">↑ Variance cascades → ↓ PR1 slightly · ↓↓ PR2 a lot · ↑ Fails · ↑ Cost · ↑ Lead Time · SQL: SUM(actual_date-scheduled_date)</div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:28px">
+    <div class="nbtn c5" style="display:inline-block;max-width:300px;margin:0 auto" onclick="nav('charts')">
+      <div class="nbtn-icon">📈</div>
+      <div class="nbtn-title">NEXT: SEE CHARTS →</div>
+      <div class="nbtn-desc">Visualize KPIs as interactive graphs</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     CHARTS
+═══════════════════════════════════════════════ -->
+<div class="page" id="page-charts">
+<div class="page-inner">
+  <div class="page-hdr">
+    <div>
+      <div class="step-badge">STEP 05 · ANALYSIS</div>
+      <h2 class="page-title">INTERACTIVE <span style="color:var(--green)">ANALYSIS CHARTS</span></h2>
+      <p class="page-desc">All four charts respond to the controls below. <strong style="color:var(--amber)">Styles/Season is the master switch</strong> — more styles raises failure rate, cost, variance gap, and manhour cost simultaneously. Pass Rate avg drives the variance gap. Wage scales all dollar outputs.</p>
+    </div>
+    <button class="back-btn" onclick="nav('home')">← HOME</button>
+  </div>
+
+  <!-- MASTER CONTROLS -->
+  <div class="card" style="margin-bottom:24px;background:var(--surface)">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;color:var(--amber);margin-bottom:14px">🎛️ MASTER CHART CONTROLS — STYLES/SEASON IS THE MASTER SWITCH · ALL 4 CHARTS RESPOND</div>
+    <div style="font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:12px;letter-spacing:1px">
+      📈 MORE STYLES → ↑ FAIL RATE &nbsp;·&nbsp; ↑ LABOR COST &nbsp;·&nbsp; ↑ VARIANCE GAP &nbsp;·&nbsp; ↑ MANHOUR TOTAL &nbsp;|&nbsp; 📉 LOWER PASS RATE AVG → WIDER SCHEDULED vs ACTUAL GAP
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+      <div class="sl-row">
+        <label>PASS RATE T1 <span id="c-lbl-pr1">38%</span></label>
+        <input type="range" min="10" max="90" value="38" oninput="updateCharts()" id="c-pr1">
+      </div>
+      <div class="sl-row">
+        <label>PASS RATE T2 <span id="c-lbl-pr2">52%</span></label>
+        <input type="range" min="10" max="95" value="52" oninput="updateCharts()" id="c-pr2">
+      </div>
+      <div class="sl-row">
+        <label>WAGE $/hr <span id="c-lbl-wage">$50</span></label>
+        <input type="range" min="25" max="150" value="50" step="5" oninput="updateCharts()" id="c-wage">
+      </div>
+      <div class="sl-row">
+        <label>STYLES/SEASON <span id="c-lbl-styles">50</span></label>
+        <input type="range" min="10" max="500" value="50" step="10" oninput="updateCharts()" id="c-styles">
+      </div>
+    </div>
+  </div>
+
+  <div class="g2" style="margin-bottom:18px">
+    <div class="chart-wrap">
+      <div class="chart-title">PROBABILITY OF OUTCOME — 2 VS 3 TESTS</div>
+      <div class="chart-sub">SQL INPUT: Historical pass_rate_pct · FLX_APPROVAL_STEP</div>
+      <canvas id="ch-prob" height="200"></canvas>
+      <div class="chart-sql"><span>FORMULA:</span> P(Pass→Pass) = T1_rate × T2_rate · P(Fail→Pass) = (1−T1) × T2<br><span>SQL:</span> SELECT pass_rate_pct FROM FLX_APPROVAL_STEP GROUP BY task_code</div>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-title">LABOR COST — 2-TEST VS 3-TEST SCENARIOS</div>
+      <div class="chart-sub">SQL INPUT: AVG(actual_minutes) per test · wage rate input</div>
+      <canvas id="ch-cost" height="200"></canvas>
+      <div class="chart-sql"><span>FORMULA:</span> Cost = (total_minutes ÷ 60) × wage_rate<br><span>SQL:</span> SELECT AVG(actual_minutes) FROM FLX_APPROVAL_STEP GROUP BY test_number</div>
+    </div>
+  </div>
+
+  <div class="g2" style="margin-bottom:20px">
+    <div class="chart-wrap">
+      <div class="chart-title">SCHEDULE VARIANCE — ACTUAL VS SCHEDULED DAYS</div>
+      <div class="chart-sub">SQL INPUT: actual_date − scheduled_date · FLX_APPROVAL_STEP · FLX_CALENDAR</div>
+      <canvas id="ch-var" height="200"></canvas>
+      <div class="chart-sql"><span>KPI OUTPUT:</span> Updated Order Lead Time<br><span>SQL:</span> SELECT (actual_date − scheduled_date) AS variance_days FROM FLX_APPROVAL_STEP</div>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-title">SEASONAL MANHOUR LABOR COST BY MONTH</div>
+      <div class="chart-sub">SQL INPUT: SUM(actual_minutes) per month · FLX_APPROVAL_STEP · FLX_STYLE</div>
+      <canvas id="ch-mh" height="200"></canvas>
+      <div class="chart-sql"><span>SQL:</span> SELECT TO_CHAR(actual_date,'MON') AS month, SUM(actual_minutes)/60*wage AS cost FROM FLX_APPROVAL_STEP GROUP BY month</div>
+    </div>
+  </div>
+
+  <!-- RESULT BOXES -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px">
+    <div class="res-box">
+      <div class="res-lbl">2-TEST COST / CYCLE</div>
+      <div class="res-big" id="r-cost2">$79</div>
+      <div class="res-sub">per approval cycle</div>
+    </div>
+    <div class="res-box" style="border-color:var(--amber)">
+      <div class="res-lbl">3-TEST COST / CYCLE</div>
+      <div class="res-big" style="color:var(--amber)" id="r-cost3">$113</div>
+      <div class="res-sub">+40 min extra per cycle</div>
+    </div>
+    <div class="res-box" style="border-color:var(--red)">
+      <div class="res-lbl">SEASONAL COST IMPACT</div>
+      <div class="res-big" style="color:var(--red)" id="r-seasonal">$1,667</div>
+      <div class="res-sub">if all 50 styles run 3 tests vs 2</div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:20px">
+    <div class="nbtn c6" style="display:inline-block;max-width:300px;margin:0 auto" onclick="nav('pres')">
+      <div class="nbtn-icon">🎯</div>
+      <div class="nbtn-title">NEXT: LEADERSHIP VIEW →</div>
+      <div class="nbtn-desc">Executive summary with live KPIs and Go/No-Go decision</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SQL
+═══════════════════════════════════════════════ -->
+<div class="page" id="page-sql">
+<div class="page-inner">
+  <div class="page-hdr">
+    <div>
+      <div class="step-badge">STEP 02 · AUTOMATION</div>
+      <h2 class="page-title">SQL <span style="color:var(--red)">DATA MINING</span></h2>
+      <p class="page-desc">These are the exact SQL queries that connect to Flex PLM and pull live data powering every KPI and chart. Copy any query and run it with your DBA.</p>
+    </div>
+    <button class="back-btn" onclick="nav('home')">← HOME</button>
+  </div>
+
+  <div class="warn-box">
+    <strong>⚠️ SAFETY RULES:</strong> Only use SELECT statements. Never write, edit, or delete data. Work with your DBA or IT team. Test on staging first — NEVER on production Flex PLM.
+  </div>
+
+  <div class="g2">
+    <div>
+      <div class="sec-title">QUERY 1 — MILESTONE PASS/FAIL</div>
+      <div class="sec-sub">Feeds: Data table · Schedule variance chart</div>
+      <div class="sql-block">
+        <button class="csql" onclick="copySql(this)">COPY</button>
+<span class="cm">-- Pull Pass/Fail results for Task 22 series</span>
+<span class="kw">SELECT</span>
+  t.<span class="st">task_code</span>, t.<span class="st">task_name</span>,
+  a.<span class="st">scheduled_date</span>, a.<span class="st">actual_date</span>,
+  a.<span class="st">approval_status</span>,
+  a.<span class="st">fail_rate_pct</span>,
+  a.<span class="st">actual_minutes</span>,
+  (a.<span class="st">actual_date</span> - a.<span class="st">scheduled_date</span>)
+    <span class="cm">AS variance_days</span>
+<span class="kw">FROM</span>  <span class="tb">FLX_TASK</span>           t
+<span class="kw">JOIN</span>  <span class="tb">FLX_APPROVAL_STEP</span>  a
+      <span class="kw">ON</span> a.task_id = t.task_id
+<span class="kw">WHERE</span> t.task_code <span class="kw">LIKE</span> <span class="st">'22%'</span>
+<span class="kw">ORDER BY</span> a.scheduled_date;</div>
+      <div style="margin-top:6px;font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace">→ FEEDS: On-Time Rate, Schedule Variance, Lead Time</div>
+    </div>
+
+    <div>
+      <div class="sec-title">QUERY 2 — ON-TIME RATE KPI</div>
+      <div class="sec-sub">Feeds: Speedometer #1 · On-Time % display</div>
+      <div class="sql-block">
+        <button class="csql" onclick="copySql(this)">COPY</button>
+<span class="cm">-- Calculate Tasks On-Time Rate %</span>
+<span class="kw">SELECT</span>
+  <span class="fn">COUNT</span>(*)  <span class="cm">AS total_scheduled</span>,
+  <span class="fn">SUM</span>(<span class="kw">CASE WHEN</span>
+    a.actual_date &lt;= a.scheduled_date
+    <span class="kw">AND</span> a.approval_status=<span class="st">'PASS'</span>
+    <span class="kw">THEN</span> 1 <span class="kw">ELSE</span> 0
+  <span class="kw">END</span>) <span class="cm">AS on_time_pass</span>,
+  <span class="fn">ROUND</span>(
+    <span class="fn">SUM</span>(<span class="kw">CASE WHEN</span>
+      a.actual_date &lt;= a.scheduled_date
+      <span class="kw">AND</span> a.approval_status=<span class="st">'PASS'</span>
+      <span class="kw">THEN</span> 1 <span class="kw">ELSE</span> 0
+    <span class="kw">END</span>) * 100.0 / <span class="fn">COUNT</span>(*), 1
+  ) <span class="cm">AS on_time_rate_pct</span>
+<span class="kw">FROM</span>  <span class="tb">FLX_APPROVAL_STEP</span> a
+<span class="kw">JOIN</span>  <span class="tb">FLX_TASK</span>          t
+      <span class="kw">ON</span> a.task_id = t.task_id
+<span class="kw">WHERE</span> t.task_code <span class="kw">LIKE</span> <span class="st">'22%'</span>;</div>
+      <div style="margin-top:6px;font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace">→ FEEDS: On-Time Speedometer</div>
+    </div>
+
+    <div>
+      <div class="sec-title">QUERY 3 — HISTORICAL PASS RATE</div>
+      <div class="sec-sub">Feeds: Probability tree · Go/No-Go decision</div>
+      <div class="sql-block">
+        <button class="csql" onclick="copySql(this)">COPY</button>
+<span class="cm">-- Historical pass rate → feeds probability tree</span>
+<span class="kw">SELECT</span>
+  t.task_code,
+  <span class="fn">COUNT</span>(*) <span class="cm">AS total_tests</span>,
+  <span class="fn">SUM</span>(<span class="kw">CASE WHEN</span>
+    a.approval_status=<span class="st">'PASS'</span>
+    <span class="kw">THEN</span> 1 <span class="kw">ELSE</span> 0
+  <span class="kw">END</span>) <span class="cm">AS passes</span>,
+  <span class="fn">ROUND</span>(
+    <span class="fn">SUM</span>(<span class="kw">CASE WHEN</span>
+      a.approval_status=<span class="st">'PASS'</span>
+      <span class="kw">THEN</span> 1 <span class="kw">ELSE</span> 0
+    <span class="kw">END</span>) * 100.0 / <span class="fn">COUNT</span>(*), 1
+  ) <span class="cm">AS pass_rate_pct</span>
+<span class="kw">FROM</span>  <span class="tb">FLX_APPROVAL_STEP</span> a
+<span class="kw">JOIN</span>  <span class="tb">FLX_TASK</span>          t
+      <span class="kw">ON</span> a.task_id = t.task_id
+<span class="kw">WHERE</span> a.actual_date >=
+  <span class="fn">ADD_MONTHS</span>(<span class="fn">SYSDATE</span>, -24)
+<span class="kw">GROUP BY</span> t.task_code;</div>
+      <div style="margin-top:6px;font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace">→ FEEDS: Probability tree pass/fail %</div>
+    </div>
+
+    <div>
+      <div class="sec-title">QUERY 4 — MONTHLY MANHOUR COST</div>
+      <div class="sec-sub">Feeds: Manhour bar chart · Seasonal cost KPI</div>
+      <div class="sql-block">
+        <button class="csql" onclick="copySql(this)">COPY</button>
+<span class="cm">-- Monthly manhours by fabric type</span>
+<span class="kw">SELECT</span>
+  <span class="fn">TO_CHAR</span>(a.actual_date,
+    <span class="st">'MON YYYY'</span>) <span class="cm">AS month</span>,
+  <span class="fn">SUM</span>(a.actual_minutes)
+    <span class="cm">AS total_minutes</span>,
+  <span class="fn">ROUND</span>(
+    <span class="fn">SUM</span>(a.actual_minutes)/60,2
+  ) <span class="cm">AS total_hours</span>,
+  <span class="fn">ROUND</span>(
+    <span class="fn">SUM</span>(a.actual_minutes)/60*50,2
+  ) <span class="cm">AS labor_cost_usd</span>
+<span class="kw">FROM</span>  <span class="tb">FLX_APPROVAL_STEP</span>   a
+<span class="kw">JOIN</span>  <span class="tb">FLX_TASK</span>            t
+      <span class="kw">ON</span> a.task_id = t.task_id
+<span class="kw">JOIN</span>  <span class="tb">FLX_STYLE_ATTR</span>      sa
+      <span class="kw">ON</span> sa.style_id = t.style_id
+<span class="kw">WHERE</span> sa.attr_value <span class="kw">LIKE</span>
+  <span class="st">'%RECYCLED%'</span>
+<span class="kw">GROUP BY</span>
+  <span class="fn">TO_CHAR</span>(a.actual_date,
+    <span class="st">'MON YYYY'</span>)
+<span class="kw">ORDER BY</span> <span class="fn">MIN</span>(a.actual_date);</div>
+      <div style="margin-top:6px;font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace">→ FEEDS: Monthly bar chart · Cost KPI</div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:28px">
+    <div class="nbtn c3" style="display:inline-block;max-width:300px;margin:0 auto" onclick="nav('collect')">
+      <div class="nbtn-icon">📥</div>
+      <div class="nbtn-title">NEXT: COLLECT DATA →</div>
+      <div class="nbtn-desc">Record scheduled vs actual dates and pass/fail outcomes</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PRESENTATION
+═══════════════════════════════════════════════ -->
+<div class="page" id="page-pres">
+<div class="page-inner">
+  <div class="page-hdr">
+    <div>
+      <div class="step-badge">STEP 06 · LEADERSHIP SUMMARY</div>
+      <h2 class="page-title">EXECUTIVE <span style="color:var(--blue)">DECISION VIEW</span></h2>
+      <p class="page-desc">One-page summary for leadership. All numbers are live — they reflect the current slider values from the KPIs and Charts pages.</p>
+    </div>
+    <button class="back-btn" onclick="nav('home')">← HOME</button>
+  </div>
+
+  <!-- THESIS STATEMENT -->
+  <div style="background:linear-gradient(135deg,rgba(255,107,26,0.07),rgba(13,207,191,0.03));border:1px solid rgba(255,107,26,0.2);border-radius:12px;padding:26px;margin-bottom:26px;text-align:center">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:8px">THESIS STATEMENT</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(1.3rem,3vw,2.1rem);letter-spacing:2px;line-height:1.2;max-width:680px;margin:0 auto">
+      BY QUANTIFYING APPROVAL MILESTONES IN REAL TIME, SUPPLY CHAIN TEAMS CAN MAKE
+      <span style="color:var(--orange)">INFORMED GO/NO-GO DECISIONS</span> BEFORE DELAYS REACH THE
+      <span style="color:var(--teal)">SOCIAL CALENDAR</span>
+    </div>
+  </div>
+
+  <!-- LIVE KPI ROW WITH LEVERS -->
+  <div class="pres-row">
+    <div class="pres-kpi" id="pres-tile-ontime" style="border-top:3px solid var(--green)">
+      <div class="pres-lbl">ON-TIME RATE</div>
+      <div class="pres-val" id="p-ontime" style="color:var(--green)">67%</div>
+      <div class="pres-delta" id="p-ontime-d">4 of 6 tasks</div>
+      <div class="pres-lever">
+        <div class="pres-lever-row"><span>LOW</span><span id="p-lbl-ontime" style="color:var(--green)">67%</span><span>HIGH</span></div>
+        <input type="range" min="0" max="100" value="67" step="1" id="p-sl-ontime"
+          onmousedown="this._dragging=true" ontouchstart="this._dragging=true"
+          onmouseup="this._dragging=false" ontouchend="this._dragging=false"
+          oninput="updatePres()" style="accent-color:var(--green)">
+      </div>
+    </div>
+    <div class="pres-kpi" id="pres-tile-fail" style="border-top:3px solid var(--orange)">
+      <div class="pres-lbl">AVG FAIL / STYLE</div>
+      <div class="pres-val" id="p-fail" style="color:var(--orange)">0.33</div>
+      <div class="pres-delta">fail rate per style</div>
+      <div class="pres-lever">
+        <div class="pres-lever-row"><span>LOW</span><span id="p-lbl-fail" style="color:var(--orange)">33%</span><span>HIGH</span></div>
+        <input type="range" min="0" max="100" value="33" step="1" id="p-sl-fail"
+          onmousedown="this._dragging=true" ontouchstart="this._dragging=true"
+          onmouseup="this._dragging=false" ontouchend="this._dragging=false"
+          oninput="updatePres()" style="accent-color:var(--orange)">
+      </div>
+    </div>
+    <div class="pres-kpi" id="pres-tile-lead" style="border-top:3px solid var(--red)">
+      <div class="pres-lbl">LEAD TIME DELTA</div>
+      <div class="pres-val" id="p-lead" style="color:var(--red)">+8d</div>
+      <div class="pres-delta">vs scheduled baseline</div>
+      <div class="pres-lever">
+        <div class="pres-lever-row"><span>-5d</span><span id="p-lbl-lead" style="color:var(--red)">+8d</span><span>+30d</span></div>
+        <input type="range" min="-5" max="30" value="8" step="0.5" id="p-sl-lead"
+          onmousedown="this._dragging=true" ontouchstart="this._dragging=true"
+          onmouseup="this._dragging=false" ontouchend="this._dragging=false"
+          oninput="updatePres()" style="accent-color:var(--red)">
+      </div>
+    </div>
+    <div class="pres-kpi" id="pres-tile-cost" style="border-top:3px solid var(--amber)">
+      <div class="pres-lbl">SEASONAL COST DELTA</div>
+      <div class="pres-val" id="p-cost" style="color:var(--amber)">$1,667</div>
+      <div class="pres-delta">3-test vs 2-test</div>
+      <div class="pres-lever">
+        <div class="pres-lever-row"><span>10</span><span id="p-lbl-styles" style="color:var(--amber)">50 styles</span><span>500</span></div>
+        <input type="range" min="10" max="500" value="50" step="10" id="p-sl-styles"
+          onmousedown="this._dragging=true" ontouchstart="this._dragging=true"
+          onmouseup="this._dragging=false" ontouchend="this._dragging=false"
+          oninput="updatePres()" style="accent-color:var(--amber)">
+      </div>
+    </div>
+  </div>
+
+  <!-- PRES CHARTS -->
+  <div class="g2" style="margin-bottom:22px">
+    <div class="chart-wrap">
+      <div class="chart-title">PASS PROBABILITY — 2 VS 3 TESTS</div>
+      <div class="chart-sub">Best-case outcome probability by test scenario</div>
+      <canvas id="ch-pres-prob" height="180"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-title">SCHEDULE VARIANCE BY TASK</div>
+      <div class="chart-sub">Days late per milestone — gap between lines = schedule risk</div>
+      <canvas id="ch-pres-var" height="180"></canvas>
+    </div>
+  </div>
+
+  <!-- BOTTLENECK ANALYSIS SECTION -->
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-bottom:20px">
+    <div class="card t-orange">
+      <div class="sec-title">BOTTLENECK ANALYSIS</div>
+      <div class="dtable-wrap"><table class="dtable" style="margin-top:10px">
+        <thead><tr><th>Root Cause</th><th>Task</th><th>Days Lost</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Color Standard Failure</td><td style="font-family:'IBM Plex Mono',monospace;color:var(--teal)">22b</td><td id="bn-days-22b" style="color:var(--red);font-family:'IBM Plex Mono',monospace">+3.0</td><td><span id="bn-badge-22b" class="badge b-fail">ESCALATE</span></td></tr>
+          <tr><td>Wicking Test Late</td><td style="font-family:'IBM Plex Mono',monospace;color:var(--teal)">22e</td><td id="bn-days-22e" style="color:var(--red);font-family:'IBM Plex Mono',monospace">+2.0</td><td><span id="bn-badge-22e" class="badge b-fail">REVIEW</span></td></tr>
+          <tr><td>Water Repellency Late</td><td style="font-family:'IBM Plex Mono',monospace;color:var(--teal)">22f</td><td id="bn-days-22f" style="color:var(--red);font-family:'IBM Plex Mono',monospace">+3.0</td><td><span id="bn-badge-22f" class="badge b-fail">REVIEW</span></td></tr>
+          <tr><td>All other tasks</td><td style="font-family:'IBM Plex Mono',monospace;color:var(--teal)">22a,c,d</td><td style="color:var(--green);font-family:'IBM Plex Mono',monospace">0</td><td><span class="badge b-pass">ON TRACK</span></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div>
+      <!-- FINAL BOTTLENECK ANALYSIS — mirrors KPI page live panel exactly -->
+      <div class="res-box" style="margin-bottom:12px;border-color:var(--teal);padding:14px 16px">
+        <div class="res-lbl">FINAL BOTTLENECK ANALYSIS</div>
+
+        <!-- Big flag — GO / CAUTION / NO-GO -->
+        <div id="p-gonogo" style="font-family:'Bebas Neue',sans-serif;font-size:2.8rem;line-height:1.05;color:var(--green);margin:4px 0">GO ✓</div>
+
+        <!-- Reason line -->
+        <div id="p-gonogo-r" style="font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:10px;line-height:1.5">Approve with monitoring · +8d within range</div>
+
+        <!-- Same two live trigger readout boxes as KPI page -->
+        <div style="border-top:1px solid var(--border);padding-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+
+          <!-- PASS RATE AVG -->
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px;text-align:center">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:1.5px;color:var(--muted);margin-bottom:4px;text-transform:uppercase">Pass Rate Avg</div>
+            <div id="p-gng-pr-avg" style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--white);line-height:1">45.0%</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--muted);margin-top:3px">&gt;75% = GO · ≤80% = CAUTION</div>
+          </div>
+
+          <!-- TEST MIN AVG -->
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px;text-align:center">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:1.5px;color:var(--muted);margin-bottom:4px;text-transform:uppercase">Test Min Avg</div>
+            <div id="p-gng-min-avg" style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--white);line-height:1">45 min</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--muted);margin-top:3px">&gt;60 min = CAUTION</div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="info-box" style="font-size:11px">
+        <strong>LIVE FROM KPIs:</strong><br>
+        Mirrors the KPI page engine exactly — all 3 triggers update this flag in real time as sliders change.
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MODALS
+═══════════════════════════════════════════════ -->
+
+<!-- Data row modals -->
+<div class="modal-ov" id="mod-22a">
+<div class="modal">
+  <button class="mc" onclick="closeMod('mod-22a')">✕</button>
+  <div class="modal-title">TASK 22A — DATA → KPI FLOW</div>
+  <span class="modal-sub">4 INPUTS · HOW EACH ONE BECOMES AN OUTPUT</span>
+  <div class="info-box" style="margin-bottom:14px"><strong>INPUTS:</strong> ① Apr 12 scheduled &nbsp;② Apr 12 actual &nbsp;③ PASS &nbsp;④ 32 min</div>
+  <div style="background:var(--surface);padding:12px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:2;color:var(--text)">
+    <span style="color:var(--teal)">VARIANCE</span> = Apr 12 − Apr 12 = <b style="color:var(--green)">0 days</b><br>
+    <span style="color:var(--teal)">LABOR COST</span> = 32 ÷ 60 × $50 = <b style="color:var(--green)">$26.67</b><br>
+    <span style="color:var(--teal)">CONTRIBUTION TO ON-TIME RATE</span> = +1 on-time pass<br>
+    <span style="color:var(--teal)">CONTRIBUTION TO FAIL RATE</span> = 0 (passed)<br>
+    <span style="color:var(--teal)">SQL TABLE ROW</span> = 1 row in FLX_APPROVAL_STEP
+  </div>
+</div>
+</div>
+
+<div class="modal-ov" id="mod-22b">
+<div class="modal">
+  <button class="mc" onclick="closeMod('mod-22b')">✕</button>
+  <div class="modal-title">TASK 22B — BOTTLENECK EXAMPLE</div>
+  <span class="modal-sub">4 INPUTS · HOW A FAIL CASCADES THROUGH ALL KPIs</span>
+  <div class="info-box" style="margin-bottom:14px"><strong>INPUTS:</strong> ① Apr 22 scheduled &nbsp;② Apr 25 actual &nbsp;③ FAIL 78% &nbsp;④ 11 min</div>
+  <div style="background:var(--surface);padding:12px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:2;color:var(--text)">
+    <span style="color:var(--teal)">VARIANCE</span> = Apr 25 − Apr 22 = <b style="color:var(--red)">+3 days LATE</b><br>
+    <span style="color:var(--teal)">LABOR COST</span> = 11 ÷ 60 × $50 = <b>$9.17</b><br>
+    <span style="color:var(--teal)">CONTRIBUTION TO ON-TIME RATE</span> = 0 (failed AND late)<br>
+    <span style="color:var(--red)">BOTTLENECK</span> = This failure triggers retest cycle + adds to lead time<br>
+    <span style="color:var(--amber)">GO/NO-GO SIGNAL</span> = Color standard failure elevates risk flag
+  </div>
+</div>
+</div>
+
+<div class="modal-ov" id="mod-22c">
+<div class="modal">
+  <button class="mc" onclick="closeMod('mod-22c')">✕</button>
+  <div class="modal-title">TASK 22C — PROBABILITY TREE SOURCE</div>
+  <span class="modal-sub">THIS TASK FEEDS THE PROBABILITY ANALYSIS</span>
+  <div class="info-box" style="margin-bottom:14px"><strong>INPUTS:</strong> ① May 3 scheduled &nbsp;② May 2 actual &nbsp;③ FAIL 62% &nbsp;④ 45 min</div>
+  <div style="background:var(--surface);padding:12px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:2;color:var(--text)">
+    <span style="color:var(--teal)">HISTORICAL PASS RATE T1</span> = 38% (from 24-month SQL history)<br>
+    <span style="color:var(--teal)">2-TEST PROBABILITY</span> = 0.38 × 0.52 = <b style="color:var(--green)">19.76% both pass</b><br>
+    <span style="color:var(--teal)">3-TEST BEST CASE</span> = 0.38 × 0.52 × 0.96 = <b style="color:var(--green)">18.97% all 3 pass</b><br>
+    <span style="color:var(--amber)">GO/NO-GO QUESTION</span> = Is +$33 worth raising certainty to 96%?
+  </div>
+</div>
+</div>
+
+<!-- KPI modals -->
+<div class="modal-ov" id="mod-kpi-ontime">
+<div class="modal">
+  <button class="mc" onclick="closeMod('mod-kpi-ontime')">✕</button>
+  <div class="modal-title">ON-TIME RATE — FULL EXPLANATION</div>
+  <span class="modal-sub">KPI #1 · SQL: FLX_APPROVAL_STEP · FLX_TASK</span>
+  <p style="font-size:13px;color:var(--text);line-height:1.7;margin-bottom:14px">This KPI answers: <b style="color:var(--teal)">"Of all tests we scheduled this season, what percentage were both approved AND finished on time?"</b></p>
+  <div style="background:var(--surface);padding:12px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:2;color:var(--text);margin-bottom:14px">
+    FORMULA: (PASS tasks where actual ≤ scheduled) ÷ COUNT(all tasks)<br>
+    EXAMPLE: 4 on-time passes ÷ 6 total = <b style="color:var(--green)">67%</b>
+  </div>
+  <div class="info-box"><strong>WHY IT MATTERS:</strong> If this drops below 60%, social media calendar dates are at risk. SQL runs this nightly and alerts if threshold is breached.</div>
+</div>
+</div>
+
+<div class="modal-ov" id="mod-kpi-complete">
+<div class="modal">
+  <button class="mc" onclick="closeMod('mod-kpi-complete')">✕</button>
+  <div class="modal-title">TASK COMPLETION RATE — FULL EXPLANATION</div>
+  <span class="modal-sub">KPI #2 · SQL: FLX_APPROVAL_STEP</span>
+  <p style="font-size:13px;color:var(--text);line-height:1.7;margin-bottom:14px">Answers: <b style="color:var(--teal)">"Have all scheduled tests actually been attempted?"</b> — even a FAIL counts as complete because a decision was made.</p>
+  <div class="info-box"><strong>KEY INSIGHT:</strong> 100% completion + low on-time rate means tests ARE happening but running late. SQL distinguishes these two scenarios automatically — very different risk profiles.</div>
+</div>
+</div>
+
+<div class="modal-ov" id="mod-kpi-fail">
+<div class="modal">
+  <button class="mc" onclick="closeMod('mod-kpi-fail')">✕</button>
+  <div class="modal-title">AVG FAIL PER STYLE — FULL EXPLANATION</div>
+  <span class="modal-sub">KPI #3 · SQL: FLX_APPROVAL_STEP · FLX_STYLE</span>
+  <p style="font-size:13px;color:var(--text);line-height:1.7;margin-bottom:14px">Tracks how many approval failures each style generates on average. Lower = better. Feeds the bell-curve regression and identifies which fabric types have the highest risk profiles.</p>
+  <div class="info-box"><strong>USE CASE:</strong> If a new recycled material consistently scores above 0.5 fails/style, that's a red flag before the season starts. SQL shows this trend building in real time.</div>
+</div>
+</div>
+
+<div class="modal-ov" id="mod-kpi-eff">
+<div class="modal">
+  <button class="mc" onclick="closeMod('mod-kpi-eff')">✕</button>
+  <div class="modal-title">TASK EFFICIENCY RATE — FULL EXPLANATION</div>
+  <span class="modal-sub">KPI #4 · SQL: FLX_TASK_ATTR · FLX_APPROVAL_STEP</span>
+  <p style="font-size:13px;color:var(--text);line-height:1.7;margin-bottom:14px">Measures how many tasks get completed per minute of labor. A higher number means your team processes more approvals with less time. Declining efficiency signals capacity issues before they become delays.</p>
+</div>
+</div>
+
+<div class="modal-ov" id="mod-kpi-lead">
+<div class="modal">
+  <button class="mc" onclick="closeMod('mod-kpi-lead')">✕</button>
+  <div class="modal-title">UPDATED ORDER LEAD TIME — FULL EXPLANATION</div>
+  <span class="modal-sub">KPI #7 · SQL: FLX_CALENDAR · FLX_MILESTONE · FLX_APPROVAL_STEP</span>
+  <p style="font-size:13px;color:var(--text);line-height:1.7;margin-bottom:14px">The most critical KPI for social calendar alignment. Takes your original planned lead time and adds every accumulated day of schedule variance across all tasks.</p>
+  <div style="background:var(--surface);padding:12px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:2;color:var(--text);margin-bottom:12px">
+    FORMULA: Scheduled Lead Time ± SUM(variance_days)<br>
+    Task 22: +3 + 2 + 3 = +8 accumulated days<br>
+    If warehouse receipt was May 15 → now May 23
+  </div>
+  <div class="info-box"><strong>THE BOTTLENECK LINK:</strong> This is how a 3-day color test failure translates into a missed launch date. SQL makes this cascade visible before it's too late to act.</div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════ -->
+<script>
+
+'use strict';
+
+// ── MOBILE MENU ─────────────────────────────────────────────
+function toggleMobMenu() {
+  var menu = document.getElementById('mob-nav');
+  if (menu) {
+    menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+  }
+}
+
+// Show/hide mobile menu button based on screen width
+function handleMobileNav() {
+  var btn = document.getElementById('mob-menu-btn');
+  if (btn) {
+    btn.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+  }
+  // Also close mob nav if window resized large
+  if (window.innerWidth > 768) {
+    var menu = document.getElementById('mob-nav');
+    if (menu) menu.style.display = 'none';
+  }
+}
+window.addEventListener('resize', handleMobileNav);
+handleMobileNav();
+
+// ── NAVIGATION ──────────────────────────────────────────────
+var charts = {};
+var chartsInited = false;
+var presChartsInited = false;
+
+function nav(id) {
+  // Hide all pages
+  var pages = document.querySelectorAll('.page');
+  for (var i = 0; i < pages.length; i++) {
+    pages[i].classList.remove('active');
+  }
+  // Remove active from all nav buttons
+  var btns = document.querySelectorAll('.tnav');
+  for (var j = 0; j < btns.length; j++) {
+    btns[j].classList.remove('active');
+  }
+  // Show target page
+  var target = document.getElementById('page-' + id);
+  if (target) target.classList.add('active');
+  // Activate nav button
+  var navBtn = document.getElementById('tn-' + id);
+  if (navBtn) navBtn.classList.add('active');
+  // Scroll to top
+  window.scrollTo(0, 0);
+
+  // ── SYNC KPI SLIDERS → CHARTS SLIDERS ──────────
+  // When going to Charts, pre-load chart sliders from live KPI values
+  // so Charts start exactly where KPIs left off.
+  if (id === 'charts') {
+    var st = window._kpiState;
+    if (st) {
+      var cp1 = document.getElementById('c-pr1');
+      var cp2 = document.getElementById('c-pr2');
+      var cw  = document.getElementById('c-wage');
+      var cs  = document.getElementById('c-styles');
+      if (cp1) { cp1.value = st.pr1; txt('c-lbl-pr1', st.pr1.toFixed(0) + '%'); }
+      if (cp2) { cp2.value = st.pr2; txt('c-lbl-pr2', st.pr2.toFixed(0) + '%'); }
+      if (cw)  { cw.value  = st.wage; txt('c-lbl-wage', '$' + st.wage.toFixed(0)); }
+      // styles slider stays at its last user-set value — only sync pr/wage
+    }
+    setTimeout(function() {
+      initCharts();
+      updateCharts();
+    }, 150);
+  }
+  // ── LEADERSHIP VIEW: reflect last state from KPIs or Charts ──
+  if (id === 'pres') {
+    // Ensure KPI state is current
+    updateKPIs();
+    // Then initialize charts and update pres display
+    setTimeout(function() {
+      initPresCharts();
+      updatePres();
+    }, 150);
+  }
+}
+
+// ── MODALS ──────────────────────────────────────────────────
+function openMod(id) {
+  var el = document.getElementById(id);
+  if (el) el.classList.add('open');
+}
+
+function closeMod(id) {
+  var el = document.getElementById(id);
+  if (el) el.classList.remove('open');
+}
+
+// Close modal on overlay click
+document.addEventListener('click', function(e) {
+  if (e.target && e.target.classList.contains('modal-ov')) {
+    e.target.classList.remove('open');
+  }
+});
+
+// ── COPY SQL ────────────────────────────────────────────────
+function copySql(btn) {
+  var block = btn.parentElement;
+  var text = block.innerText.replace(/^COPY\s*/, '');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function() {
+      btn.textContent = 'COPIED ✓';
+      setTimeout(function() { btn.textContent = 'COPY'; }, 2000);
+    });
+  }
+}
+
+// ── HELPER ──────────────────────────────────────────────────
+function txt(id, val) {
+  var el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function bar(id, pct, color) {
+  var el = document.getElementById(id);
+  if (el) {
+    el.style.width = Math.min(Math.max(pct, 0), 100) + '%';
+    el.style.background = color;
+  }
+}
+
+function colorOf(val, good, warn) {
+  if (val >= good) return 'var(--green)';
+  if (val >= warn) return 'var(--amber)';
+  return 'var(--red)';
+}
+
+// ══════════════════════════════════════════════════════════
+// SCHEDULE VARIANCE = MASTER KNOB
+// When variance changes it physically cascades to:
+//   PR1  → drops slightly  (high variance = fewer first-pass approvals)
+//   PR2  → drops a lot     (delays mean labs are overwhelmed = worse 2nd pass)
+//   Fails→ rises           (more delays = more failed milestones)
+//   Cost → rises           (variance × wage rate = direct cost multiplier)
+//   Lead → rises           (base variance + retest penalty)
+// All other sliders can still be manually adjusted.
+// ══════════════════════════════════════════════════════════
+
+// Called ONLY when the variance slider moves — cascades to other sliders first
+function onVarianceChange() {
+  var variance = parseFloat(document.getElementById('s-var').value);
+  var varMin = -5, varMax = 30;
+  // Normalized 0→1 across the full range (-5 to +30)
+  var vn = (variance - varMin) / (varMax - varMin);  // 0.0 at -5 days, 1.0 at +30 days
+
+  // ── CASCADE: physically move dependent slider handles ──
+  // PR1 drops slightly:   55% at best → 22% at worst
+  var pr1New = Math.round(55 - vn * 33);
+  // PR2 drops a lot:      78% at best → 10% at worst
+  var pr2New = Math.round(78 - vn * 68);
+  // Fails rise:           0 at best  → 6 at worst
+  var failsNew = Math.round(vn * 6);
+
+  // ── TEST MINUTES CASCADE ────────────────────────────────────
+  // As schedule variance rises (delays), tests take longer due to rework/retesting
+  // T1: base=45min → max=90min at full variance
+  // T2: base=50min → max=100min at full variance
+  // T3: base=40min → max=80min at full variance
+  var t1New = Math.round(45 + vn * 45);
+  var t2New = Math.round(50 + vn * 50);
+  var t3New = Math.round(40 + vn * 40);
+
+  var slPr1 = document.getElementById('s-pr1');
+  var slPr2 = document.getElementById('s-pr2');
+  var slFails = document.getElementById('s-fails');
+  var slT1  = document.getElementById('s-t1');
+  var slT2  = document.getElementById('s-t2');
+  var slT3  = document.getElementById('s-t3');
+
+  if (slPr1)  slPr1.value  = Math.max(1,  Math.min(100, pr1New));
+  if (slPr2)  slPr2.value  = Math.max(1,  Math.min(100, pr2New));
+  if (slFails)slFails.value= Math.max(0,  Math.min(6,   failsNew));
+  if (slT1)   slT1.value   = Math.max(10, Math.min(120, t1New));
+  if (slT2)   slT2.value   = Math.max(10, Math.min(120, t2New));
+  if (slT3)   slT3.value   = Math.max(10, Math.min(120, t3New));
+
+  updateKPIs();  // recalculate everything from the now-updated slider positions
+}
+
+function updateKPIs() {
+  // Read all current slider values (may have been set by onVarianceChange OR by hand)
+  var pr1      = parseFloat(document.getElementById('s-pr1').value);
+  var pr2      = parseFloat(document.getElementById('s-pr2').value);
+  var wage     = parseFloat(document.getElementById('s-wage').value);
+  var t1       = parseFloat(document.getElementById('s-t1').value);
+  var t2       = parseFloat(document.getElementById('s-t2').value);
+  var t3       = parseFloat(document.getElementById('s-t3').value);
+  var variance = parseFloat(document.getElementById('s-var').value);
+  var _sfEl = document.getElementById('s-fails');
+  var fails = _sfEl ? parseInt(_sfEl.value) : 2;
+  var totalTasks = 6;
+
+  // Normalized variance (0→1) — drives the cost multiplier
+  var varNorm = (variance + 5) / 35;   // -5→0.0, +8≈0.37, +30→1.0
+
+  // ── COST MULTIPLIER — variance × wage = direct cost correlation ──
+  var costMult = 1.0 + varNorm * 0.60;
+
+  // ── UPDATE ALL SLIDER LABELS ──────────────────────
+  txt('l-pr1',   pr1.toFixed(0) + '%');
+  txt('l-pr2',   pr2.toFixed(0) + '%');
+  txt('l-wage',  '$' + wage.toFixed(0));
+  txt('l-t1',    t1.toFixed(0) + ' min');
+  txt('l-t2',    t2.toFixed(0) + ' min');
+  txt('l-t3',    t3.toFixed(0) + ' min');
+  txt('l-var',   (variance >= 0 ? '+' : '') + variance.toFixed(2));
+  txt('l-fails', fails + '');
+
+  // ── COMPLETION RATE (calculate first — drives lead time) ──
+  var pr1f     = pr1 / 100;
+  var pr2f     = pr2 / 100;
+  var compRate = (pr1f + (1 - pr1f) * pr2f) * 100;
+  var comp01   = compRate / 100;
+
+  // ── LEAD TIME ─────────────────────────────────────
+  var maxRetestDays = (t1 + t2 + t3) / 60 / 8;
+  var retestDays    = maxRetestDays * (1 - comp01);
+  var totalLead     = variance + retestDays;
+
+  var clLead = totalLead <= 0.5 ? 'var(--green)' : totalLead <= 7 ? 'var(--amber)' : 'var(--red)';
+  var leadEl = document.getElementById('k-lead');
+  if (leadEl) {
+    leadEl.textContent = (totalLead >= 0 ? '+' : '') + totalLead.toFixed(2) + ' DAYS';
+    leadEl.style.color = clLead;
+  }
+  bar('kb-lead', Math.min(Math.abs(totalLead) * 3.5, 100), clLead);
+
+  // ── 2-TEST LABOR COST ─────────────────────────────
+  var cost2 = (t1 + t2) / 60 * wage * costMult;
+  var cost2El = document.getElementById('k-cost2');
+  if (cost2El) { cost2El.textContent = '$' + cost2.toFixed(2); }
+  bar('kb-cost2', Math.min((cost2 / 250) * 100, 100), 'var(--teal)');
+
+  // ── 3-TEST LABOR COST ─────────────────────────────
+  var cost3 = (t1 + t2 + t3) / 60 * wage * costMult;
+  var cost3El = document.getElementById('k-cost3');
+  if (cost3El) { cost3El.textContent = '$' + cost3.toFixed(2); }
+  bar('kb-cost3', Math.min((cost3 / 250) * 100, 100), 'var(--amber)');
+
+  // ── ON-TIME RATE ──────────────────────────────────
+  var failPenalty = (fails / totalTasks) * 15;
+  var onTimeRate  = Math.max(0, Math.min(100, pr1 - failPenalty));
+  var clOn = onTimeRate >= 65 ? 'var(--green)' : onTimeRate >= 40 ? 'var(--amber)' : 'var(--red)';
+  var onEl = document.getElementById('k-ontime');
+  if (onEl) { onEl.textContent = onTimeRate.toFixed(2) + '%'; onEl.style.color = clOn; }
+  bar('kb-ontime', onTimeRate, clOn);
+
+  // ── COMPLETION RATE display ───────────────────────
+  var clComp = compRate >= 80 ? 'var(--teal)' : compRate >= 55 ? 'var(--amber)' : 'var(--red)';
+  var compEl = document.getElementById('k-complete');
+  if (compEl) { compEl.textContent = compRate.toFixed(2) + '%'; compEl.style.color = clComp; }
+  bar('kb-complete', compRate, clComp);
+
+  // ── AVG FAIL / STYLE ──────────────────────────────
+  var avgFail = fails / totalTasks;
+  var clFail  = fails <= 1 ? 'var(--green)' : fails <= 2 ? 'var(--orange)' : 'var(--red)';
+  var failEl  = document.getElementById('k-fail');
+  if (failEl) { failEl.textContent = avgFail.toFixed(2); failEl.style.color = clFail; }
+  bar('kb-fail', avgFail * 100, clFail);
+
+  // ── TASK EFFICIENCY — driven by AVERAGE test minutes ──────
+  // As (T1+T2+T3)/3 rises, fewer tasks can be completed per hour → efficiency drops
+  var avgTestMins = (t1 + t2 + t3) / 3;
+  // Tasks completable per hour = 60 / avgTestMins
+  var effRate = avgTestMins > 0 ? (60 / avgTestMins) : 0;
+  var effEl   = document.getElementById('k-eff');
+  if (effEl) { effEl.textContent = effRate.toFixed(2); }
+  // Normalize bar: 60/10min=6.0 tasks/hr (max), 60/120min=0.5 (min)
+  bar('kb-eff', Math.min((effRate / 6) * 100, 100), 'var(--amber)');
+
+  // ── GO / NO-GO — MULTI-CONDITION ENGINE ──────────────────
+  // Three new trigger conditions as specified:
+  //   1. Pass Rate Avg: (pr1+pr2)/2 > 75% → GO signal; ≤ 80% → CAUTION flag
+  //   2. Test Minutes: (T1+T2+T3)/3 ≥ 180 min → CAUTION flag
+  //   3. Combined pass rate avg drives final decision
+  var avgPassRate = (pr1 + pr2) / 2;
+  var minutesCaution  = avgTestMins > 60;
+  var passRateCaution = avgPassRate <= 80;
+  var passRateGo      = avgPassRate > 75;
+  var leadCaution     = totalLead > 10;
+  var leadNoGo        = totalLead > 18;
+  var ontimeCaution   = onTimeRate < 55;
+  var ontimeNoGo      = onTimeRate < 30;
+
+  // Build reason string for display
+  var reasons = [];
+  if (passRateGo && !minutesCaution) reasons.push('Pass avg ' + avgPassRate.toFixed(0) + '% > 75% ✓');
+  if (passRateCaution)  reasons.push('Pass avg ' + avgPassRate.toFixed(0) + '% ≤ 80%');
+  if (minutesCaution)   reasons.push('Test avg ' + avgTestMins.toFixed(0) + 'min > 60');
+  if (leadCaution)      reasons.push('Lead +' + totalLead.toFixed(1) + 'd > 10');
+  if (ontimeCaution)    reasons.push('On-time ' + onTimeRate.toFixed(0) + '% < 55%');
+  var reasonStr = reasons.length ? reasons.join(' · ') : 'All thresholds clear';
+
+  var gg = document.getElementById('gonogo');
+  var gr = document.getElementById('gonogo-r');
+  if (gg && gr) {
+    if (leadNoGo || ontimeNoGo || (avgPassRate < 20)) {
+      gg.textContent = 'NO-GO ✗';    gg.style.color = 'var(--red)';
+      gr.textContent = reasonStr;
+    } else if (minutesCaution || (passRateCaution && !passRateGo) || leadCaution || ontimeCaution) {
+      gg.textContent = 'CAUTION ⚠';  gg.style.color = 'var(--amber)';
+      gr.textContent = reasonStr;
+    } else {
+      gg.textContent = 'GO ✓';       gg.style.color = 'var(--green)';
+      gr.textContent = 'Pass avg ' + avgPassRate.toFixed(0) + '% · Lead +' + totalLead.toFixed(1) + 'd · All clear';
+    }
+  }
+
+  // ── CORRELATION METER ─────────────────────────────
+  var cm = document.getElementById('corr-meter');
+  if (cm) {
+    if (compRate >= 75 && !minutesCaution) {
+      cm.textContent = 'HEALTHY ✓'; cm.style.color = 'var(--green)';
+    } else if (compRate >= 50 || minutesCaution) {
+      cm.textContent = 'MODERATE ⚠'; cm.style.color = 'var(--amber)';
+    } else {
+      cm.textContent = 'AT RISK ✗'; cm.style.color = 'var(--red)';
+    }
+  }
+
+  // ── STORE FOR CHARTS PAGE ─────────────────────────
+  window._kpiState = {
+    pr1: pr1, pr2: pr2, wage: wage,
+    t1: t1, t2: t2, t3: t3,
+    variance: variance, fails: fails,
+    totalLead: totalLead, compRate: compRate,
+    onTimeRate: onTimeRate, cost2: cost2, cost3: cost3,
+    retestDays: retestDays, varNorm: varNorm, costMult: costMult,
+    avgPassRate: avgPassRate, avgTestMins: avgTestMins, effRate: effRate
+  };
+
+  // ── LIVE TRIGGER READOUTS IN GO/NO-GO PANEL ──────
+  var prAvgColor = avgPassRate > 75 ? 'var(--green)' : avgPassRate > 60 ? 'var(--amber)' : 'var(--red)';
+  var minAvgColor = avgTestMins <= 60 ? 'var(--green)' : avgTestMins < 90 ? 'var(--amber)' : 'var(--red)';
+  var prAvgEl = document.getElementById('gng-pr-avg');
+  var minAvgEl = document.getElementById('gng-min-avg');
+  if (prAvgEl)  { prAvgEl.textContent = avgPassRate.toFixed(1) + '%';   prAvgEl.style.color = prAvgColor; }
+  if (minAvgEl) { minAvgEl.textContent = avgTestMins.toFixed(0) + ' min'; minAvgEl.style.color = minAvgColor; }
+
+  // ── SYNC PRESENTATION PAGE ────────────────────────
+  var presStylesEl = document.getElementById('p-sl-styles');
+  var presStyles = presStylesEl ? parseFloat(presStylesEl.value) : 50;
+  syncPres(onTimeRate, fails, totalLead, cost3 - cost2, presStyles);
+}
+
+
+function syncPres(onTimeRate, fails, variance, diff, styles) {
+  // Always reseed pres sliders from KPI state (so navigating back always shows fresh values)
+  // Sliders with _dragging=true are currently being held by user — skip those
+  var slOT = document.getElementById('p-sl-ontime');
+  var slFL = document.getElementById('p-sl-fail');
+  var slLD = document.getElementById('p-sl-lead');
+  var slCS = document.getElementById('p-sl-styles');
+  if (slOT && !slOT._dragging) slOT.value = onTimeRate.toFixed(0);
+  if (slFL && !slFL._dragging) slFL.value = (fails / 6 * 100).toFixed(0);
+  if (slLD && !slLD._dragging) slLD.value = Math.max(-5, Math.min(30, variance)).toFixed(1);
+  // Styles: sync with Charts c-styles slider
+  var cStylesEl = document.getElementById('c-styles');
+  if (slCS && !slCS._dragging && cStylesEl) slCS.value = cStylesEl.value;
+  updatePres();
+}
+
+// Called by: syncPres (from updateKPIs), updateCharts, pres slider oninput, nav to pres
+function updatePres() {
+  // ── ALWAYS pull live values from KPI engine first ──────────
+  var st = window._kpiState || {
+    pr1:38, pr2:52, t1:45, t2:50, t3:40, wage:50,
+    onTimeRate:38, totalLead:8, fails:2, cost2:79.17, cost3:112.50,
+    avgPassRate:45, avgTestMins:45, compRate:62.96, varNorm:0.37
+  };
+
+  // ── RESEED SLIDERS from KPI state every time (unless user is actively dragging) ──
+  // This ensures navigating back to Present always shows current KPI values
+  var slOT = document.getElementById('p-sl-ontime');
+  var slFL = document.getElementById('p-sl-fail');
+  var slLD = document.getElementById('p-sl-lead');
+  var slCS = document.getElementById('p-sl-styles');
+
+  // Only auto-update sliders that are NOT being actively dragged right now
+  if (slOT && !slOT._dragging) { slOT.value = st.onTimeRate.toFixed(0); }
+  if (slFL && !slFL._dragging) { slFL.value = (st.fails / 6 * 100).toFixed(0); }
+  if (slLD && !slLD._dragging) { slLD.value = Math.max(-5, Math.min(30, st.totalLead)).toFixed(1); }
+  // Styles slider stays at Charts page value (c-styles) unless user has set it manually
+  var cStylesEl = document.getElementById('c-styles');
+  if (slCS && !slCS._dragging && cStylesEl) { slCS.value = cStylesEl.value; }
+
+  // Read final values from sliders
+  var onTimeRate  = slOT ? parseFloat(slOT.value) : st.onTimeRate;
+  var failPct     = slFL ? parseFloat(slFL.value) : (st.fails / 6 * 100);
+  var leadDays    = slLD ? parseFloat(slLD.value) : st.totalLead;
+  var stylesCount = slCS ? parseFloat(slCS.value) : 50;
+  var avgFail     = failPct / 100;
+
+  // ── UPDATE THE 4 KPI TILES ────────────────────────────────
+  // On-Time Rate tile
+  var cOT = onTimeRate >= 65 ? 'var(--green)' : onTimeRate >= 40 ? 'var(--amber)' : 'var(--red)';
+  var cOTborder = onTimeRate >= 65 ? 'var(--green)' : onTimeRate >= 40 ? 'var(--amber)' : 'var(--red)';
+  txt('p-ontime', onTimeRate.toFixed(0) + '%');
+  txt('p-ontime-d', Math.round(onTimeRate / 100 * 6) + ' of 6 tasks');
+  txt('p-lbl-ontime', onTimeRate.toFixed(0) + '%');
+  var otEl = document.getElementById('p-ontime');
+  if (otEl) otEl.style.color = cOT;
+  var otTile = document.getElementById('pres-tile-ontime');
+  if (otTile) otTile.style.borderTopColor = cOTborder;
+
+  // Avg Fail tile
+  var cFL = avgFail <= 0.17 ? 'var(--green)' : avgFail <= 0.33 ? 'var(--orange)' : 'var(--red)';
+  txt('p-fail', avgFail.toFixed(2));
+  txt('p-lbl-fail', (avgFail * 100).toFixed(0) + '%');
+  var flEl = document.getElementById('p-fail');
+  if (flEl) flEl.style.color = cFL;
+  var flTile = document.getElementById('pres-tile-fail');
+  if (flTile) flTile.style.borderTopColor = cFL;
+
+  // Lead Time tile
+  var cLD = leadDays <= 0 ? 'var(--green)' : leadDays <= 7 ? 'var(--amber)' : 'var(--red)';
+  txt('p-lead', (leadDays >= 0 ? '+' : '') + leadDays.toFixed(1) + 'd');
+  txt('p-lbl-lead', (leadDays >= 0 ? '+' : '') + leadDays.toFixed(0) + 'd');
+  var ldEl = document.getElementById('p-lead');
+  if (ldEl) ldEl.style.color = cLD;
+  var ldTile = document.getElementById('pres-tile-lead');
+  if (ldTile) ldTile.style.borderTopColor = cLD;
+
+  // Seasonal Cost tile — uses ACTUAL KPI cost difference
+  var diff    = st.cost3 - st.cost2;
+  var costAmt = diff * stylesCount;
+  var cCS     = costAmt < 2000 ? 'var(--green)' : costAmt < 5000 ? 'var(--amber)' : 'var(--red)';
+  txt('p-cost', '$' + costAmt.toLocaleString('en-US', {maximumFractionDigits: 0}));
+  txt('p-lbl-styles', stylesCount.toFixed(0) + ' styles');
+  var csEl = document.getElementById('p-cost');
+  if (csEl) csEl.style.color = cCS;
+  var csTile = document.getElementById('pres-tile-cost');
+  if (csTile) csTile.style.borderTopColor = cCS;
+
+  // ── UPDATE PROBABILITY CHART — use ACTUAL pr1/pr2 from _kpiState ──
+  // Adjust for any on-time rate changes from pres lever
+  var pr1f = st.pr1 / 100;
+  var pr2f = st.pr2 / 100;
+  // If pres on-time lever moved, blend it into implied pr1
+  if (slOT && slOT._dragging) {
+    pr1f = onTimeRate / 100;
+    pr2f = Math.max(0.1, 1 - avgFail * 1.5);
+  }
+  var pp2 = parseFloat((pr1f * pr2f * 100).toFixed(2));
+  var fp2 = parseFloat(((1 - pr1f) * pr2f * 100).toFixed(2));
+  var pf2 = parseFloat((pr1f * (1 - pr2f) * 100).toFixed(2));
+  var ff2 = parseFloat(((1 - pr1f) * (1 - pr2f) * 100).toFixed(2));
+  var pp3 = parseFloat((pp2 * 0.96).toFixed(2));
+  if (charts.presProb) {
+    charts.presProb.data.datasets[0].data = [pp2, pp3, Math.max(0, parseFloat((100 - pp2 - pp3).toFixed(2)))];
+    charts.presProb.update('none');
+  }
+
+  // ── UPDATE VARIANCE CHART — connected to lead time + KPI compRate ──
+  // Same logic as Charts page: lead time drives how dramatic the gap is
+  var varDrive   = Math.max(0, leadDays) / 30;         // 0→1
+  var failDrive  = avgFail;                              // 0→1
+  var prFactor   = Math.max(0.05, 1 - st.compRate / 100); // lower compRate → more variance
+  var amplitude  = (varDrive * 2.5 + failDrive * 1.5) * (1 + prFactor);
+  var dramaticAmp = Math.pow(amplitude, 1.4);
+
+  var baseVariance = [0, 3, -1, 0, 2, 3];
+  var scaledVar = baseVariance.map(function(v) {
+    return v > 0
+      ? parseFloat((Math.min(30, v * Math.max(0.05, dramaticAmp))).toFixed(2))
+      : parseFloat((v / Math.max(1, amplitude * 0.5)).toFixed(2));
+  });
+  var varColors = scaledVar.map(function(v) {
+    return v > 1.5 ? 'rgba(255,59,92,0.85)' : v > 0.25 ? 'rgba(255,176,32,0.85)' : v < 0 ? 'rgba(34,212,106,0.65)' : 'rgba(90,106,122,0.5)';
+  });
+  var baseSched   = [100, 110, 120, 125, 135, 145];
+  var cumShift    = 0;
+  var scaledActual = baseSched.map(function(s, i) {
+    cumShift += scaledVar[i];
+    return parseFloat((s + cumShift * 0.4 + scaledVar[i]).toFixed(2));
+  });
+
+  if (charts.presVar) {
+    // Dataset 0 = scheduled line, Dataset 1 = actual line, Dataset 2 = variance bars
+    charts.presVar.data.datasets[0].data = baseSched;
+    charts.presVar.data.datasets[1].data = scaledActual;
+    charts.presVar.data.datasets[2].data = scaledVar;
+    charts.presVar.data.datasets[2].backgroundColor = varColors;
+    charts.presVar.update('none');
+  }
+
+  // ── UPDATE BOTTLENECK TABLE — rows go red/amber/green with live variance ──
+  var varTotal = scaledVar.reduce(function(a,v){ return a + Math.max(0,v); }, 0);
+  var taskStatus = [
+    { task:'22b', days: scaledVar[1] },
+    { task:'22e', days: scaledVar[4] },
+    { task:'22f', days: scaledVar[5] }
+  ];
+  taskStatus.forEach(function(t) {
+    var badgeEl = document.getElementById('bn-badge-' + t.task);
+    var daysEl  = document.getElementById('bn-days-'  + t.task);
+    if (!badgeEl || !daysEl) return;
+    var sign = t.days > 0 ? '+' : '';
+    daysEl.textContent = sign + t.days.toFixed(1);
+    if (t.days > 2) {
+      daysEl.style.color = 'var(--red)';
+      badgeEl.className = 'badge b-fail';
+      badgeEl.textContent = 'ESCALATE';
+    } else if (t.days > 0.5) {
+      daysEl.style.color = 'var(--amber)';
+      badgeEl.className = 'badge b-warn';
+      badgeEl.textContent = 'REVIEW';
+    } else {
+      daysEl.style.color = 'var(--green)';
+      badgeEl.className = 'badge b-pass';
+      badgeEl.textContent = 'ON TRACK';
+    }
+  });
+
+  // ── PASS RATE AVG + TEST MIN AVG boxes — always from _kpiState ──
+  var finalPassAvg = st.avgPassRate;   // direct from KPI engine
+  var finalMinAvg  = st.avgTestMins;  // direct from KPI engine
+
+  var prAvgColor  = finalPassAvg > 75 ? 'var(--green)' : finalPassAvg > 60 ? 'var(--amber)' : 'var(--red)';
+  var minAvgColor = finalMinAvg <= 60 ? 'var(--green)' : finalMinAvg < 90 ? 'var(--amber)' : 'var(--red)';
+  var pPrEl  = document.getElementById('p-gng-pr-avg');
+  var pMinEl = document.getElementById('p-gng-min-avg');
+  if (pPrEl)  { pPrEl.textContent  = finalPassAvg.toFixed(1) + '%';    pPrEl.style.color  = prAvgColor; }
+  if (pMinEl) { pMinEl.textContent = finalMinAvg.toFixed(0)  + ' min'; pMinEl.style.color = minAvgColor; }
+
+  // ── FINAL BOTTLENECK FLAG — identical 3-condition engine as KPI page ──
+  var pMinCaution  = finalMinAvg > 60;
+  var pPrCaution   = finalPassAvg <= 80;
+  var pPrGo        = finalPassAvg > 75;
+  var pLeadCaution = leadDays > 10;
+  var pLeadNoGo    = leadDays > 18;
+  var pOntimeNoGo  = onTimeRate < 30;
+
+  var pReasons = [];
+  if (pPrGo && !pMinCaution)  pReasons.push('Pass avg ' + finalPassAvg.toFixed(0) + '% > 75% ✓');
+  if (pPrCaution)              pReasons.push('Pass avg ' + finalPassAvg.toFixed(0) + '% ≤ 80%');
+  if (pMinCaution)             pReasons.push('Test avg ' + finalMinAvg.toFixed(0) + 'min > 60');
+  if (pLeadCaution)            pReasons.push('Lead +' + leadDays.toFixed(0) + 'd > 10');
+  if (onTimeRate < 55)         pReasons.push('On-time ' + onTimeRate.toFixed(0) + '% < 55%');
+  var pReasonStr = pReasons.length ? pReasons.join(' · ') : 'All thresholds clear';
+
+  var gg = document.getElementById('p-gonogo');
+  var gr = document.getElementById('p-gonogo-r');
+  if (gg && gr) {
+    if (pLeadNoGo || pOntimeNoGo || finalPassAvg < 20) {
+      gg.textContent = 'NO-GO ✗';    gg.style.color = 'var(--red)';
+      gr.textContent = pReasonStr;
+    } else if (pMinCaution || (pPrCaution && !pPrGo) || pLeadCaution || onTimeRate < 55) {
+      gg.textContent = 'CAUTION ⚠';  gg.style.color = 'var(--amber)';
+      gr.textContent = pReasonStr;
+    } else {
+      gg.textContent = 'GO ✓';       gg.style.color = 'var(--green)';
+      gr.textContent = 'Pass avg ' + finalPassAvg.toFixed(0) + '% · Lead +' + leadDays.toFixed(0) + 'd · All clear';
+    }
+  }
+}
+
+// ── CHART INIT ──────────────────────────────────────────────
+var TICK = { color: '#5A6A7A', font: { size: 9, family: "'IBM Plex Mono'" } };
+var GRID = { color: 'rgba(255,255,255,0.04)' };
+
+function mkCtx(id) {
+  var c = document.getElementById(id);
+  return c ? c.getContext('2d') : null;
+}
+
+function initCharts() {
+  if (chartsInited) { updateCharts(); return; }
+
+  var ctx1 = mkCtx('ch-prob');
+  var ctx2 = mkCtx('ch-cost');
+  var ctx3 = mkCtx('ch-var');
+  var ctx4 = mkCtx('ch-mh');
+  if (!ctx1 || !ctx2 || !ctx3 || !ctx4) return;
+
+  chartsInited = true;
+
+  // Use live _kpiState values so charts start exactly where KPIs are set
+  var st = window._kpiState || { pr1:38, pr2:52, t1:45, t2:50, t3:40, wage:50, compRate:62.96, cost2:79.17, cost3:112.50 };
+  var ipr1f = st.pr1 / 100, ipr2f = st.pr2 / 100;
+  var ipp2 = parseFloat((ipr1f * ipr2f * 100).toFixed(2));
+  var ifp2 = parseFloat(((1-ipr1f) * ipr2f * 100).toFixed(2));
+  var ipf2 = parseFloat((ipr1f * (1-ipr2f) * 100).toFixed(2));
+  var iff2 = parseFloat(((1-ipr1f) * (1-ipr2f) * 100).toFixed(2));
+  var ipp3 = parseFloat((ipr1f * ipr2f * 0.96 * 100).toFixed(2));
+  var ic2  = parseFloat(((st.t1 + st.t2) / 60 * st.wage).toFixed(2));
+  var ic3  = parseFloat(((st.t1 + st.t2 + st.t3) / 60 * st.wage).toFixed(2));
+  var idiff = parseFloat((ic3 - ic2).toFixed(2));
+
+  // Compute scaled variance from live compRate
+  var iBase = [0, 3, -1, 0, 2, 3];
+  var iScale = 1 - (st.compRate / 100);
+  var iVar = iBase.map(function(v){ return v > 0 ? parseFloat((v*iScale).toFixed(2)) : parseFloat((v*(1+(1-iScale)*0.3)).toFixed(2)); });
+  var iVarColors = iVar.map(function(v){ return v>1.5?'rgba(255,59,92,0.75)':v>0.25?'rgba(255,176,32,0.75)':v<0?'rgba(34,212,106,0.65)':'rgba(90,106,122,0.5)'; });
+  var iSched = [100,110,120,125,135,145];
+  var iActual = iSched.map(function(s,i){ return parseFloat((s+iVar[i]).toFixed(2)); });
+
+  charts.prob = new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels: ['P→P Both Pass', 'F→P Fail then Pass', 'P→F Pass then Fail', 'F→F Both Fail'],
+      datasets: [
+        { label: '2-Test %', data: [ipp2, ifp2, ipf2, iff2],
+          backgroundColor: ['rgba(34,212,106,0.75)','rgba(255,176,32,0.75)','rgba(255,107,26,0.75)','rgba(255,59,92,0.75)'],
+          borderRadius: 4 },
+        { label: '3-Test Best Case', data: [ipp3, 0, 0, 0],
+          backgroundColor: 'rgba(13,207,191,0.6)', borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#B8C8D8', font: { size: 10, family: "'IBM Plex Mono'" } } } },
+      scales: {
+        x: { ticks: TICK, grid: GRID },
+        y: { ticks: Object.assign({}, TICK, { callback: function(v){ return v+'%'; } }), grid: GRID, max: 45 }
+      }
+    }
+  });
+
+  charts.cost = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: ['2-Test Cost', '3-Test Cost', 'Cost Difference'],
+      datasets: [{ label: 'Labor Cost ($)', data: [ic2, ic3, idiff],
+        backgroundColor: ['rgba(13,207,191,0.75)','rgba(255,176,32,0.75)','rgba(255,59,92,0.75)'],
+        borderRadius: 6 }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: TICK, grid: GRID },
+        y: { ticks: Object.assign({}, TICK, { callback: function(v){ return '$'+v; } }), grid: GRID }
+      }
+    }
+  });
+
+  // ── VARIANCE CHART — 2-day intervals, dual Y-axis ────────
+  // Scheduled line uses 2-day spacing so variance bars look LARGE relative to scale
+  // Left axis (yBar): variance bars in days  |  Right axis (yLine): cumulative timeline
+  var iSched2 = [2, 4, 6, 8, 10, 12];  // scheduled milestones at 2-day intervals
+
+  // Starting variance based on initial pass rates (pr1=38%, pr2=52%)
+  // prAvg = 0.45, stylesFactor = 1.0, so amp is moderate
+  var iPA = (st.pr1 + st.pr2) / 200;         // 0.45
+  var iSF = 1.0;
+  var iAmp = Math.max(0.1, (1.0 - iPA) * 2.5 * Math.sqrt(iSF)); // ~1.375
+  var iBase2 = [0, 1, -0.5, 0, 0.8, 1.2];
+  var iVar2 = iBase2.map(function(v) {
+    return v > 0
+      ? parseFloat((Math.min(8, v * iAmp)).toFixed(2))
+      : parseFloat((v / Math.max(1, iSF * 0.5)).toFixed(2));
+  });
+  var iVarColors2 = iVar2.map(function(v){ return v>1?'rgba(255,59,92,0.85)':v>0.2?'rgba(255,176,32,0.85)':v<0?'rgba(34,212,106,0.65)':'rgba(90,106,122,0.5)'; });
+  var iCumShift = 0;
+  var iActual2 = iSched2.map(function(s, i) {
+    iCumShift += iVar2[i];
+    return parseFloat((s + iCumShift).toFixed(2));
+  });
+
+  charts.variance = new Chart(ctx3, {
+    type: 'bar',
+    data: {
+      labels: ['22a','22b','22c','22d','22e','22f'],
+      datasets: [
+        { label: 'Scheduled (days)', data: iSched2,
+          type: 'line', borderColor: 'rgba(13,207,191,0.9)', pointBackgroundColor: 'rgba(13,207,191,1)',
+          backgroundColor: 'rgba(13,207,191,0.05)', fill: true,
+          tension: 0.3, borderWidth: 2.5, pointRadius: 4, yAxisID: 'yLine' },
+        { label: 'Actual (days)', data: iActual2,
+          type: 'line', borderColor: 'rgba(255,107,26,0.9)', pointBackgroundColor: 'rgba(255,107,26,1)',
+          backgroundColor: 'rgba(255,107,26,0.05)', fill: true,
+          tension: 0.3, borderWidth: 2.5, pointRadius: 4, yAxisID: 'yLine' },
+        { label: 'Variance (days)', data: iVar2,
+          backgroundColor: iVarColors2, borderRadius: 4, yAxisID: 'yBar' }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: '#B8C8D8', font: { size: 9, family: "'IBM Plex Mono'" }, boxWidth: 10 } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              var v = ctx.parsed.y;
+              var sign = v >= 0 ? '+' : '';
+              return ctx.dataset.label + ': ' + sign + v.toFixed(1) + ' days';
+            }
+          }
+        }
+      },
+      scales: {
+        yLine: {
+          type: 'linear', position: 'right',
+          title: { display: true, text: 'Cumulative Days', color: '#5A6A7A', font: { size: 9 } },
+          ticks: Object.assign({}, TICK, { callback: function(v){ return v+'d'; } }),
+          grid: { display: false },
+          min: 0
+        },
+        yBar: {
+          type: 'linear', position: 'left',
+          title: { display: true, text: 'Variance (days)', color: '#5A6A7A', font: { size: 9 } },
+          ticks: Object.assign({}, TICK, { callback: function(v){ return (v>=0?'+':'')+v+'d'; } }),
+          grid: GRID,
+          min: -4, max: 10
+        },
+        x: { ticks: TICK, grid: GRID }
+      }
+    }
+  });
+
+  charts.manhour = new Chart(ctx4, {
+    type: 'bar',
+    data: {
+      labels: ['JAN','FEB','MAR','APR'],
+      datasets: [
+        { label: 'All Recycled Cellulosic ($)', data: [9850,10750,9150,8800].map(function(v){ return Math.round(v*st.wage/50); }),
+          backgroundColor: 'rgba(255,107,26,0.75)', borderRadius: 4 },
+        { label: 'Style 805 ($)', data: [950,1000,900,875].map(function(v){ return Math.round(v*st.wage/50); }),
+          backgroundColor: 'rgba(13,207,191,0.75)', borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#B8C8D8', font: { size: 10, family: "'IBM Plex Mono'" } } } },
+      scales: {
+        x: { ticks: TICK, grid: GRID },
+        y: { ticks: Object.assign({}, TICK, { callback: function(v){ return '$'+v.toLocaleString(); } }), grid: GRID }
+      }
+    }
+  });
+
+  // Seed result boxes with live KPI values
+  txt('r-cost2',    '$' + ic2.toFixed(2));
+  txt('r-cost3',    '$' + ic3.toFixed(2));
+  var si = parseInt(document.getElementById('c-styles').value || 50);
+  txt('r-seasonal', '$' + (idiff * si).toLocaleString('en-US', { maximumFractionDigits: 0 }));
+
+  // Sync chart sliders to KPI values
+  var cp1 = document.getElementById('c-pr1');
+  var cp2 = document.getElementById('c-pr2');
+  var cw  = document.getElementById('c-wage');
+  if (cp1) { cp1.value = st.pr1; txt('c-lbl-pr1', st.pr1.toFixed(0)+'%'); }
+  if (cp2) { cp2.value = st.pr2; txt('c-lbl-pr2', st.pr2.toFixed(0)+'%'); }
+  if (cw)  { cw.value  = st.wage; txt('c-lbl-wage', '$'+st.wage.toFixed(0)); }
+}
+
+function initPresCharts() {
+  if (presChartsInited) return;
+
+  var ctx1 = mkCtx('ch-pres-prob');
+  var ctx2 = mkCtx('ch-pres-var');
+  if (!ctx1 || !ctx2) return;
+
+  presChartsInited = true;
+
+  var st = window._kpiState || { pr1:38, pr2:52, compRate:62.96 };
+  var pr1f = st.pr1 / 100, pr2f = st.pr2 / 100;
+  var pp2  = parseFloat((pr1f * pr2f * 100).toFixed(2));
+  var pp3  = parseFloat((pp2 * 0.96).toFixed(2));
+
+  charts.presProb = new Chart(ctx1, {
+    type: 'doughnut',
+    data: {
+      labels: ['2-Test Best Case', '3-Test Best Case', 'Other Paths'],
+      datasets: [{ data: [pp2, pp3, Math.max(0, parseFloat((100 - pp2 - pp3).toFixed(2)))],
+        backgroundColor: ['rgba(13,207,191,0.8)', 'rgba(34,212,106,0.8)', 'rgba(22,28,34,0.9)'],
+        borderWidth: 1, borderColor: '#1E2830' }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'right', labels: { color: '#B8C8D8', font: { size: 9, family: "'IBM Plex Mono'" }, boxWidth: 12 } } }
+    }
+  });
+
+  // Start from current KPI-derived variance
+  var baseSched   = [100, 110, 120, 125, 135, 145];
+  var initVar     = [0, 3, -1, 0, 2, 3];
+  var initActual  = baseSched.map(function(s, i){ return s + initVar[i]; });
+  var initColors  = initVar.map(function(v){ return v>1.5?'rgba(255,59,92,0.75)':v>0.25?'rgba(255,176,32,0.75)':v<0?'rgba(34,212,106,0.65)':'rgba(90,106,122,0.5)'; });
+
+  charts.presVar = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: ['22a', '22b', '22c', '22d', '22e', '22f'],
+      datasets: [
+        { label: 'Scheduled (cumul.)', data: baseSched,
+          type: 'line', borderColor: 'rgba(13,207,191,0.8)', pointBackgroundColor: 'rgba(13,207,191,1)',
+          backgroundColor: 'transparent', tension: 0.3, borderWidth: 2, yAxisID: 'yLine' },
+        { label: 'Actual (cumul.)', data: initActual,
+          type: 'line', borderColor: 'rgba(255,107,26,0.8)', pointBackgroundColor: 'rgba(255,107,26,1)',
+          backgroundColor: 'transparent', tension: 0.3, borderWidth: 2, yAxisID: 'yLine' },
+        { label: 'Days Variance', data: initVar,
+          backgroundColor: initColors, borderRadius: 4, yAxisID: 'yBar' }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#B8C8D8', font: { size: 9, family: "'IBM Plex Mono'" }, boxWidth: 10 } } },
+      scales: {
+        yLine: { type: 'linear', position: 'right', ticks: TICK, grid: { display: false } },
+        yBar:  { type: 'linear', position: 'left', ticks: Object.assign({}, TICK, { callback: function(v){ return (v>=0?'+':'')+v+'d'; }}), grid: GRID },
+        x: { ticks: TICK, grid: GRID }
+      }
+    }
+  });
+}
+
+// ── CHART UPDATER ───────────────────────────────────────────
+// All 4 charts respond to:
+//   PR1 + PR2 avg  → schedule variance gap widens/narrows
+//   Styles/Season  → master multiplier on ALL charts (cost, variance, manhour, fail rate)
+//   Wage           → scales cost and manhour charts
+//   KPI state      → baseline values seeded from live KPI sliders
+function updateCharts() {
+  var pr1    = parseFloat(document.getElementById('c-pr1').value) / 100;
+  var pr2    = parseFloat(document.getElementById('c-pr2').value) / 100;
+  var wage   = parseFloat(document.getElementById('c-wage').value);
+  var styles = parseFloat(document.getElementById('c-styles').value);
+
+  txt('c-lbl-pr1',    (pr1 * 100).toFixed(0) + '%');
+  txt('c-lbl-pr2',    (pr2 * 100).toFixed(0) + '%');
+  txt('c-lbl-wage',   '$' + wage.toFixed(0));
+  txt('c-lbl-styles', styles.toFixed(0) + '');
+
+  // ── SHARED DERIVED VALUES ─────────────────────────
+  // Average pass rate (0-1) — lower avg → more variance, more failures
+  var prAvg = (pr1 + pr2) / 2;  // 0.0 to 1.0
+
+  // Styles factor: 50 styles = baseline (1.0).  More styles → higher everything.
+  var stylesFactor = styles / 50;
+
+  // Pass rate factor for variance: lower pass rate → wider gap between scheduled/actual
+  // prAvg=1.0 → factor=0.0 (no extra variance), prAvg=0.0 → factor=2.0 (double variance)
+  var prVarianceFactor = Math.max(0.05, Math.min(3.5, 2.0 - (prAvg / 0.5)));
+
+  // Combined variance amplifier: both styles and pass rate drive variance
+  // More styles + lower pass rate = widest possible gap
+  var varAmplifier = prVarianceFactor * Math.sqrt(stylesFactor);
+
+  // ── PROB CHART ──────────────────────────────────
+  // More styles → failure probability rises (more chances for something to fail)
+  // Scale fail branches up, keep total = 100%
+  var failScalar = Math.min(1.0 + (stylesFactor - 1) * 0.4, 2.2);
+  var rawPP2 = pr1 * pr2;
+  var rawFP2 = (1 - pr1) * pr2;
+  var rawPF2 = pr1 * (1 - pr2);
+  var rawFF2 = (1 - pr1) * (1 - pr2);
+  // Boost fail branches by failScalar, then re-normalize to 100
+  var adjFP2 = rawFP2 * failScalar;
+  var adjPF2 = rawPF2 * failScalar;
+  var adjFF2 = rawFF2 * failScalar;
+  var total  = rawPP2 + adjFP2 + adjPF2 + adjFF2;
+  var pp2 = parseFloat((rawPP2 / total * 100).toFixed(2));
+  var fp2 = parseFloat((adjFP2 / total * 100).toFixed(2));
+  var pf2 = parseFloat((adjPF2 / total * 100).toFixed(2));
+  var ff2 = parseFloat((adjFF2 / total * 100).toFixed(2));
+  var pp3 = parseFloat((pp2 * 0.96).toFixed(2));
+
+  if (charts.prob) {
+    charts.prob.data.datasets[0].data = [pp2, fp2, pf2, ff2];
+    charts.prob.data.datasets[1].data = [pp3, 0, 0, 0];
+    charts.prob.update('none');
+  }
+
+  // ── COST CHART — scaled by styles AND wage ────────
+  // More styles = higher total cost per cycle (parallel retesting, expediting)
+  var st = window._kpiState || { t1: 45, t2: 50, t3: 40 };
+  var costStylesMult = 1.0 + (stylesFactor - 1) * 0.6;  // softer scaling for cost
+  var c2   = parseFloat(((st.t1 + st.t2) / 60 * wage * costStylesMult).toFixed(2));
+  var c3   = parseFloat(((st.t1 + st.t2 + st.t3) / 60 * wage * costStylesMult).toFixed(2));
+  var diff = parseFloat((c3 - c2).toFixed(2));
+
+  if (charts.cost) {
+    charts.cost.data.datasets[0].data = [c2, c3, diff];
+    charts.cost.update('none');
+  }
+
+  // ── VARIANCE CHART — 2-day intervals, dramatic delta ─────────
+  // Scheduled baseline: 2-day spacing per task milestone
+  // LOW pass rate + MORE styles = ACTUAL line pulls FAR above SCHEDULED line
+  // HIGH pass rate + FEW styles = lines nearly overlap (GO state)
+
+  var baseSched = [2, 4, 6, 8, 10, 12];  // 2-day intervals — small scale makes delays look BIG
+
+  // Sensitivity formula:
+  //   prAvg: 0.0 (worst) → 1.0 (perfect). At perfect pass rate, amp → 0 (no delay)
+  //   stylesFactor: 1.0 = baseline 50 styles. 10× styles = 10× the delay pressure
+  //   Combined: low PR + high styles = maximum drama
+  var passGap   = Math.max(0, 1.0 - prAvg);               // 0 (perfect) → 1 (0% pass rate)
+  var stylesMult = Math.pow(stylesFactor, 0.7);             // sub-linear: 500 styles = ~5.6×
+  var amplitude  = passGap * 3.5 * stylesMult;             // max ~19.6 at passGap=1, styles=500
+  // Non-linear: small pass rate improvements at high pass rates have big visible impact
+  var dramaticAmp = Math.pow(amplitude, 1.2);              // exaggerates large values further
+
+  // Base per-task variance shape (task 22a–22f)
+  // Positive = late, negative = early. Scale = 2-day units.
+  var baseVariance = [0, 1.0, -0.5, 0, 0.8, 1.2];
+
+  var scaledVariance = baseVariance.map(function(v) {
+    if (v > 0) {
+      return parseFloat((Math.min(8, v * Math.max(0.02, dramaticAmp))).toFixed(2));
+    } else {
+      // Early completions shrink (get cancelled out) as variance pressure rises
+      return parseFloat((v / Math.max(1, amplitude * 0.6)).toFixed(2));
+    }
+  });
+
+  var varColors = scaledVariance.map(function(v) {
+    if (v > 1.5)  return 'rgba(255,59,92,0.9)';
+    if (v > 0.3)  return 'rgba(255,176,32,0.9)';
+    if (v < 0)    return 'rgba(34,212,106,0.7)';
+    return 'rgba(90,106,122,0.55)';
+  });
+
+  // Cumulative actual: each task's delay STACKS — so later tasks drift further from schedule
+  var scaledActual = [];
+  var cumDrift = 0;
+  for (var vi = 0; vi < baseSched.length; vi++) {
+    cumDrift += scaledVariance[vi];
+    scaledActual.push(parseFloat((baseSched[vi] + cumDrift).toFixed(2)));
+  }
+
+  if (charts.variance) {
+    charts.variance.data.datasets[0].data = baseSched;
+    charts.variance.data.datasets[1].data = scaledActual;
+    charts.variance.data.datasets[2].data = scaledVariance;
+    charts.variance.data.datasets[2].backgroundColor = varColors;
+    // Dynamically expand the right Y axis so lines always fill the chart
+    var maxActual = Math.max.apply(null, scaledActual);
+    charts.variance.options.scales.yLine.max = Math.ceil(maxActual * 1.15);
+    // Expand bar axis to show full variance bars
+    var maxVar = Math.max.apply(null, scaledVariance);
+    charts.variance.options.scales.yBar.max = Math.max(10, Math.ceil(maxVar * 1.2));
+    charts.variance.update('none');
+  }
+
+  // ── MANHOUR CHART — master scaled by styles AND wage ─────────
+  // More styles = proportionally more manhours each month
+  // Wage scales dollar amounts
+  var mhBase1 = [9850, 10750, 9150, 8800];  // All Recycled Cellulosic baseline at 50 styles
+  var mhBase2 = [950,  1000,  900,  875];   // Style 805 baseline at 50 styles
+  var mhRatio = (wage / 50) * stylesFactor;
+  if (charts.manhour) {
+    charts.manhour.data.datasets[0].data = mhBase1.map(function(v) { return Math.round(v * mhRatio); });
+    charts.manhour.data.datasets[1].data = mhBase2.map(function(v) { return Math.round(v * mhRatio); });
+    charts.manhour.update('none');
+  }
+
+  // ── PRES PROB CHART ──────────────────────────────
+  if (charts.presProb) {
+    charts.presProb.data.datasets[0].data = [pp2, pp3, parseFloat((100 - pp2 - pp3).toFixed(2))];
+    charts.presProb.update('none');
+  }
+
+  // ── PRES VARIANCE CHART — scheduled line + actual line + bars ──
+  if (charts.presVar) {
+    var bsched = [100, 110, 120, 125, 135, 145];
+    var pActual = bsched.map(function(s, i){ return parseFloat((s + scaledVariance[i]).toFixed(2)); });
+    charts.presVar.data.datasets[0].data = bsched;       // scheduled line
+    charts.presVar.data.datasets[1].data = pActual;      // actual line
+    charts.presVar.data.datasets[2].data = scaledVariance;
+    charts.presVar.data.datasets[2].backgroundColor = varColors;
+    charts.presVar.update('none');
+  }
+
+  // ── RESULT BOXES ─────────────────────────────────
+  txt('r-cost2',    '$' + c2.toFixed(2));
+  txt('r-cost3',    '$' + c3.toFixed(2));
+  txt('r-seasonal', '$' + (diff * styles).toLocaleString('en-US', { maximumFractionDigits: 0 }));
+
+  // Sync pres page cost
+  txt('p-cost', '$' + (diff * styles).toLocaleString('en-US', { maximumFractionDigits: 0 }));
+
+  // ── PUSH CHARTS STATE TO PRESENT PAGE ────────────
+  // Whenever Charts sliders change, keep Present page in sync
+  updatePres();
+}
+
+// ── INIT ────────────────────────────────────────────────────
+// Run updateKPIs immediately so _kpiState is populated before
+// the user ever visits the Charts page.
+document.getElementById('tn-home').classList.add('active');
+updateKPIs();
+</script>
+</body>
+</html>
