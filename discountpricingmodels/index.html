@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gap Discount Pricing Model</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet">
+<style>
+/* Layout: sticky header + scrollable tab rail; each view is a stack of panels on a 12-col grid that collapses to one column on phones. */
+:root{
+  --bg:#F3F4F7;--panel:#FFFFFF;--ink:#14213D;--ink2:#47536B;--muted:#6B7488;--line:#DCE0E8;--soft:#E9EDF4;
+  --accent:#1F4E79;--accent2:#C8641E;--accentSoft:#DDE7F2;
+  --good:#1D7A55;--goodBg:#E1F2EA;--warn:#9A6200;--warnBg:#FBF0D9;--bad:#B3261E;--badBg:#FBE4E1;
+  --shade:rgba(200,100,30,.10);--range:rgba(31,78,121,.10);
+  --fDisp:'Fraunces',Georgia,'Times New Roman',serif;--fBody:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;--fNum:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0E1524;--panel:#16203A;--ink:#E8ECF4;--ink2:#B7C0D3;--muted:#8E99B0;--line:#2A3757;--soft:#1D2946;--accent:#7FAEDB;--accent2:#EE9A5B;--accentSoft:#233658;--good:#5CC995;--goodBg:#133528;--warn:#E9B455;--warnBg:#3A2D12;--bad:#F2867D;--badBg:#3D1A1A;--shade:rgba(238,154,91,.13);--range:rgba(127,174,219,.14);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0E1524;--panel:#16203A;--ink:#E8ECF4;--ink2:#B7C0D3;--muted:#8E99B0;--line:#2A3757;--soft:#1D2946;--accent:#7FAEDB;--accent2:#EE9A5B;--accentSoft:#233658;--good:#5CC995;--goodBg:#133528;--warn:#E9B455;--warnBg:#3A2D12;--bad:#F2867D;--badBg:#3D1A1A;--shade:rgba(238,154,91,.13);--range:rgba(127,174,219,.14);color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--fBody);font-size:15px;line-height:1.5;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--panel)}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--panel);border-bottom:1px solid var(--line)}
+.brandrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-block:12px 6px}
+.brand{display:flex;flex-direction:column;min-width:0;flex:1}
+.brand b{font-family:var(--fDisp);font-size:21px;font-weight:600;letter-spacing:.2px}
+.brand span{font-size:12.5px;color:var(--muted)}
+.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding-bottom:0;-webkit-overflow-scrolling:touch}
+.tabs::-webkit-scrollbar{display:none}
+.tabs a{flex:none;padding:9px 12px;border-bottom:3px solid transparent;color:var(--ink2);text-decoration:none;font-weight:500;font-size:14px;white-space:nowrap}
+.tabs a:hover{color:var(--ink)}.tabs a.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:8px 14px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--panel);font:600 14px var(--fBody);text-decoration:none;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent)}.btn.sm{min-height:32px;padding:5px 10px;font-size:13px}
+.btn:hover{filter:brightness(1.08)}
+:focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
+main{padding-block:18px 40px}
+.view{display:flex;flex-direction:column;gap:16px}
+.vh{display:flex;flex-direction:column;gap:4px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;color:var(--accent)}
+h1,h2{font-family:var(--fDisp);font-weight:600;text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(24px,3.2vw,32px)}h2{font-size:20px}
+h3{font-size:15px;margin:0;font-weight:600}
+p{margin:0}.lead{color:var(--ink2);max-width:72ch}
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+.s12{grid-column:span 12}.s8{grid-column:span 8}.s7{grid-column:span 7}.s6{grid-column:span 6}.s5{grid-column:span 5}.s4{grid-column:span 4}
+@media (max-width:900px){.s8,.s7,.s6,.s5,.s4{grid-column:span 12}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.ph{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.ph small,.note{color:var(--muted);font-size:13px}
+.banner{background:var(--accentSoft);border-radius:var(--r);padding:10px 14px;font-size:13.5px;color:var(--ink2)}
+.banner b{color:var(--ink)}
+/* hero numbers */
+.hero{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.hero{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.hero-n{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:2px;border-top:4px solid var(--good)}
+.hero-n.bad{border-top-color:var(--bad)}.hero-n.warn{border-top-color:var(--warn)}
+.hero-n .lab{font-size:12.5px;color:var(--muted)}.hero-n b{font:600 clamp(22px,3vw,30px) var(--fNum);font-variant-numeric:tabular-nums}.hero-n .sub{font-size:12.5px;color:var(--ink2)}
+/* tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.tile{all:unset;box-sizing:border-box;cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:grid;grid-template-columns:1fr auto;grid-template-areas:"n n" "v v" "s s" "p k";gap:4px 8px;align-items:center}
+.tile:hover{border-color:var(--accent)}.tile:focus-visible{outline:3px solid var(--accent2)}
+.t-name{grid-area:n;font-size:13px;color:var(--ink2);font-weight:500}.t-val{grid-area:v;font:600 22px var(--fNum);font-variant-numeric:tabular-nums}.t-sub{grid-area:s;font-size:12px;color:var(--muted);font-family:var(--fNum)}
+.tile .pill{grid-area:p;justify-self:start}.tile .spark{grid-area:k;width:84px;height:26px}
+.spark path{fill:none;stroke:var(--accent);stroke-width:2}.spark circle{fill:var(--accent)}
+.spark.bad path{stroke:var(--bad)}.spark.bad circle{fill:var(--bad)}.spark.warn path{stroke:var(--warn)}.spark.warn circle{fill:var(--warn)}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill.ok{background:var(--goodBg);color:var(--good)}.pill.okw,.pill.fav{background:var(--accentSoft);color:var(--accent)}.pill.warn{background:var(--warnBg);color:var(--warn)}.pill.bad{background:var(--badBg);color:var(--bad)}.pill.na{background:var(--soft);color:var(--muted)}
+.counts{display:flex;gap:6px;flex-wrap:wrap}
+/* charts */
+.chart{min-width:0}.chart svg{width:100%;height:auto;display:block;touch-action:pan-y}
+.c-read{font-size:13px;color:var(--ink2);min-height:2.6em;font-family:var(--fNum);line-height:1.35}
+.c-read b{color:var(--ink)}.flagt{color:var(--bad);font-weight:600}
+.c-grid{stroke:var(--line);stroke-width:1}.c-zero{stroke:var(--ink2);stroke-width:1.2}
+.c-ax{fill:var(--muted);font:11px var(--fBody)}.c-t{font-weight:600}.c-val{fill:var(--ink2);font:600 11px var(--fNum)}
+.c-line{fill:none;stroke:var(--accent);stroke-width:2.4;stroke-linejoin:round}.c-mean{fill:none;stroke:var(--ink2);stroke-width:1.5;stroke-dasharray:3 4}
+.c-be{fill:none;stroke:var(--accent2);stroke-width:2.4;stroke-dasharray:7 5}
+.c-range{fill:var(--range);stroke:none}.c-lim{fill:none;stroke:var(--accent);stroke-width:1;stroke-dasharray:5 4;opacity:.7}
+.c-dot{fill:var(--accent)}.c-flag{fill:var(--bad);stroke:var(--panel);stroke-width:1.5}
+.c-shade{fill:var(--shade)}.c-ref{stroke:var(--ink2);stroke-width:1.2;stroke-dasharray:2 3}.c-ref.warnl{stroke:var(--bad)}.c-ref.tgl{stroke:var(--good)}
+.c-reft{font-weight:600}.c-mark{stroke:var(--good);stroke-width:1.5;stroke-dasharray:4 3}.c-markt{fill:var(--good);font-weight:600}
+.c-hover{stroke:var(--ink2);stroke-width:1;opacity:.5}
+.b-a{fill:var(--accent)}.b-b{fill:var(--accent2)}.b-n{fill:var(--muted)}.b-good{fill:var(--good)}.b-bad{fill:var(--bad)}.b-warn{fill:var(--warn)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--ink2)}
+.legend i{display:inline-block;width:14px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.lg-line{background:var(--accent)}.lg-mean{border-top:2px dashed var(--ink2);height:0!important;width:16px!important}.lg-range{background:var(--range);outline:1px dashed var(--accent)}.lg-flag{background:var(--bad);border-radius:50%!important;width:10px!important}.lg-shade{background:var(--shade)}.lg-a{background:var(--accent)}.lg-b{background:var(--accent2)}.lg-n{background:var(--muted)}.lg-bad{background:var(--bad)}.lg-warn{background:var(--warn)}.lg-tg{border-top:2px dotted var(--good);height:0!important}.lg-be{border-top:3px dashed var(--accent2);height:0!important;width:18px!important}
+/* key-values */
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.kv.k4{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.kv>div{background:var(--soft);border-radius:8px;padding:9px 11px;display:flex;flex-direction:column;gap:1px;min-width:0}
+.kv span{font-size:12px;color:var(--muted)}.kv b{font:600 19px var(--fNum);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.kv b.sm{font:600 13.5px var(--fBody)}.kv em{font-style:normal;font-size:12px;color:var(--ink2)}
+.tg{color:var(--good)}.tb{color:var(--bad)}
+.rec{font-size:14px;color:var(--ink2);border-left:3px solid var(--accent2);padding-left:10px}
+.verdict{border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:2px;background:var(--goodBg)}
+.verdict.warn{background:var(--warnBg)}.verdict.bad{background:var(--badBg)}
+.verdict .lab{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--ink2)}.verdict b{font-family:var(--fDisp);font-size:24px}
+.verdict.ok b{color:var(--good)}.verdict.warn b{color:var(--warn)}.verdict.bad b{color:var(--bad)}
+.note.bad{color:var(--bad);font-weight:500}
+/* tables */
+.tbl{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th{text-align:left;font-weight:600;color:var(--ink2);border-bottom:2px solid var(--line);padding:8px;white-space:nowrap;font-size:12.5px}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+tr.cur td{background:var(--accentSoft)}
+td small{color:var(--muted)}
+td select{min-width:124px;min-height:36px;padding:6px 8px;font-size:13.5px}
+/* forms */
+form{display:flex;flex-direction:column;gap:12px}
+.fr{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:500;color:var(--ink2)}
+input[type=text],input[type=number],select,textarea{font:15px var(--fBody);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 10px;min-height:40px;width:100%}
+textarea{min-height:64px;resize:vertical}
+input[type=range]{width:100%;accent-color:var(--accent);min-height:32px}
+.chk{flex-direction:row;align-items:center;gap:8px}.chk input{width:18px;height:18px;accent-color:var(--accent)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg button{all:unset;cursor:pointer;padding:7px 12px;font-size:13.5px;font-weight:500;color:var(--ink2);min-height:22px}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--panel)}
+.seg button:focus-visible{outline:3px solid var(--accent2);outline-offset:-3px}
+.ctrl{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.ctrl>label{flex-direction:row;align-items:center;gap:8px}
+.presets{display:flex;gap:6px;flex-wrap:wrap}
+.linkbtn{all:unset;cursor:pointer;color:var(--accent);font-weight:600;text-decoration:underline;text-underline-offset:2px}
+.att{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:14px}
+.pager{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:16px;margin-top:6px}
+.pg-n{font-size:13px;color:var(--muted)}
+.ladder{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+@media (max-width:760px){.ladder{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.rung{border-radius:8px;padding:9px;background:var(--soft);display:flex;flex-direction:column;gap:2px;font-size:12.5px;color:var(--ink2)}
+.rung .z{font-family:var(--fNum);color:var(--muted)}.rung b{font:600 15px var(--fNum);color:var(--ink)}
+.rung.r2,.rung.r3{background:var(--warnBg)}.rung.r4{background:var(--badBg)}
+.cnt{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+@media (max-width:760px){.cnt{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.cnt div{background:var(--soft);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column}.cnt b{font:600 20px var(--fNum)}.cnt span{font-size:12px;color:var(--muted)}.cnt .bad b{color:var(--bad)}
+.live{background:var(--soft);border-radius:8px;padding:10px 12px;font-size:14px;line-height:1.7}
+.msg{font-size:13.5px;color:var(--good);min-height:1.4em}
+.empty{color:var(--muted);padding:12px}
+.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+dl.gl{display:grid;grid-template-columns:minmax(140px,220px) 1fr;gap:8px 16px;margin:0}
+dl.gl dt{font-weight:600}dl.gl dd{margin:0;color:var(--ink2)}
+@media (max-width:600px){dl.gl{grid-template-columns:1fr}dl.gl dd{margin-bottom:6px}}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.flow a{text-decoration:none}
+footer.foot{border-top:1px solid var(--line);padding-block:16px 28px;font-size:12.5px;color:var(--muted)}
+footer.foot a{color:var(--accent)}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+
+</head>
+<body>
+<header class="top"><div class="wrap">
+ <div class="brandrow">
+  <div class="brand"><b>Gap Discount Pricing Model</b><span>Working reference model · Manager, Pricing Strategy &amp; Analytics · Thomas Powanda</span></div>
+  <button class="btn ghost sm" id="theme" type="button">Dark mode</button>
+ </div>
+ <nav class="tabs" aria-label="Sections">
+  <a href="#dashboard" data-v="dashboard">Dashboard</a><a href="#simulator" data-v="simulator">Discount simulator</a><a href="#kpis" data-v="kpis">KPI control charts</a><a href="#pricing" data-v="pricing">Price position</a><a href="#tactics" data-v="tactics">Tactics &amp; elasticity</a><a href="#scenarios" data-v="scenarios">Scenarios</a><a href="#signoff" data-v="signoff">Sign-off tracker</a><a href="#guide" data-v="guide">How it works</a>
+ </nav>
+</div></header>
+
+<main class="wrap">
+<!-- ================= DASHBOARD ================= -->
+<section class="view" id="v-dashboard" aria-labelledby="h-d">
+ <div class="vh"><span class="eyebrow">Strategic discount budget · latest week <span id="d-week"></span></span>
+  <h1 id="h-d">Clearance pushed discounts past the guardrail, and the promotion lost gross profit</h1>
+  <p class="lead">One working model for price position, pricing architecture and discount tactics. Every number comes from the Discount Budget KPI Workbook. Click any KPI tile to open its control chart.</p></div>
+ <div class="banner"><b>Reference model.</b> Weekly sales data is simulated for demonstration. Competitor prices are real (611 public web listings captured 3 Nov 2026). This is an independent case study, not Gap Inc. data and not affiliated with Gap Inc.</div>
+ <div class="hero" id="d-hero"></div>
+ <div class="panel"><div class="ph"><h2>11 discount KPIs this week</h2><div class="counts" id="d-counts"></div></div><small class="note" id="d-set"></small><div class="tiles" id="d-tiles"></div></div>
+ <div class="grid">
+  <div class="panel s8"><div class="ph"><h2>Discount depth against its normal range</h2><button class="btn ghost sm" type="button" data-go="kpis">Open all control charts</button></div><div class="chart" id="d-c1"></div></div>
+  <div class="panel s4"><h2>Needs attention</h2><ul class="att" id="d-att"></ul>
+   <h3>Recommended actions</h3><ul class="att"><li>Cap routine promotions near 31% off, where discounts stop breaking even.</li><li>Route anything deeper through the sign-off tracker.</li><li>Re-base core tickets toward a 120 price index, or cut promo depth.</li><li>Keep denim promotions shallow: they pull future sales forward.</li></ul>
+   <div class="flow"><button class="btn" type="button" data-go="simulator">Test a discount</button><button class="btn ghost" type="button" data-go="signoff">Submit a request</button></div></div>
+  <div class="panel s4"><div class="ph"><h2>Profit by discount depth</h2></div><p class="note">Average gross-profit change vs no promotion, 52 weeks</p><div class="chart" id="d-c2"></div><button class="btn ghost sm" type="button" data-go="tactics">See tactics</button></div>
+  <div class="panel s4"><div class="ph"><h2>Price index vs peers</h2></div><p class="note">Real web prices · Gap ÷ peer average × 100</p><div class="chart" id="d-c3"></div><button class="btn ghost sm" type="button" data-go="pricing">See price position</button></div>
+  <div class="panel s4"><div class="ph"><h2>Does 30% off pay for itself?</h2></div><p class="note">Predicted unit lift vs the lift needed to break even</p><div class="chart" id="d-c4"></div><button class="btn ghost sm" type="button" data-go="tactics">See elasticity</button></div>
+ </div>
+ <nav class="pager" aria-label="Page navigation"></nav>
+</section>
+
+<!-- ================= SIMULATOR ================= -->
+<section class="view" id="v-simulator" hidden aria-labelledby="h-s">
+ <div class="vh"><span class="eyebrow">Pricing tactics · what-if</span><h1 id="h-s">Test a discount before it runs</h1>
+ <p class="lead">Set a ticket price, cost and depth. The model predicts the unit lift from category elasticity, checks break-even, scores the depth against normal weeks and names who must approve it.</p></div>
+ <div class="grid">
+  <div class="panel s5"><h2>Your promotion</h2>
+   <div class="presets" aria-label="Example promotions"><button class="btn ghost sm" type="button" data-preset='{"cat":"Denim","price":79.95,"cost":25.58,"depth":0.3,"base":10000,"mode":"model","planned":false}'>Denim 30% off</button><button class="btn ghost sm" type="button" data-preset='{"cat":"Tees","price":39.95,"cost":12.78,"depth":0.4,"base":20000,"mode":"model","planned":false}'>Tees 40% off</button><button class="btn ghost sm" type="button" data-preset='{"cat":"Knits","price":69.95,"cost":22.38,"depth":0.25,"base":12000,"mode":"model","planned":false}'>Knits 25% off</button><button class="btn ghost sm" type="button" data-preset='{"cat":"Denim","price":89.95,"cost":28.78,"depth":0.5,"base":10000,"mode":"model","planned":true}'>Black Friday denim 50%</button></div>
+   <form id="simf" novalidate>
+    <div class="fr">
+     <label for="s-cat">Category<select id="s-cat" name="cat"><option>Denim</option><option>Knits</option><option>Tees</option></select></label>
+     <label for="s-price">Ticket price ($)<input id="s-price" name="price" type="number" min="1" step="0.01" inputmode="decimal"></label>
+     <label for="s-cost">Unit cost ($)<input id="s-cost" name="cost" type="number" min="0" step="0.01" inputmode="decimal"></label>
+     <label for="s-base">Baseline units (no promo)<input id="s-base" name="base" type="number" min="1" step="100" inputmode="numeric"></label>
+    </div>
+    <label for="s-depth">Discount depth: <b id="depth-out"></b><input id="s-depth" name="depth" type="range" min="0" max="60" step="1"></label>
+    <fieldset style="border:0;padding:0;margin:0;display:flex;gap:16px;flex-wrap:wrap"><legend class="note" style="padding:0;margin-bottom:4px">Unit lift</legend>
+     <label class="chk"><input type="radio" name="mode" value="model"> Use category elasticity</label><label class="chk"><input type="radio" name="mode" value="own"> Enter my own</label></fieldset>
+    <label for="s-lift" id="lift-row">Expected unit lift (%)<input id="s-lift" name="lift" type="number" step="1" inputmode="numeric"></label>
+    <label class="chk" for="s-planned"><input id="s-planned" name="planned" type="checkbox"> Planned event, pre-approved (e.g. Black Friday)</label>
+    <p class="note" id="sim-m"></p>
+   </form>
+   <button class="btn" type="button" id="sim-send">Send to sign-off tracker →</button>
+  </div>
+  <div class="panel s7"><h2>Outcome</h2><div id="sim-out"></div></div>
+  <div class="panel s12"><h2>Gross profit at every depth</h2><div class="chart" id="sim-c"></div></div>
+  <div class="panel s12"><h2>All outcomes at a glance</h2><div class="tbl" id="sim-t"></div></div>
+ </div>
+ <nav class="pager" aria-label="Page navigation"></nav>
+</section>
+
+<!-- ================= KPIs ================= -->
+<section class="view" id="v-kpis" hidden aria-labelledby="h-k">
+ <div class="vh"><span class="eyebrow">Discount KPIs · statistical control</span><h1 id="h-k">Is this week normal? Control charts for all 11 KPIs</h1>
+ <p class="lead">Each week is compared with the average and standard deviation of the weeks before it. Planned events can be left out of the baseline so a Black Friday spike does not widen the range and hide real problems.</p></div>
+ <div class="panel"><div class="ctrl">
+  <label for="k-sel">KPI <select id="k-sel"></select></label>
+  <span class="flow"><button class="btn ghost sm" id="k-prev" type="button">← Previous KPI</button><button class="btn ghost sm" id="k-next" type="button">Next KPI →</button></span>
+  <span>Window <span class="seg" id="k-win"><button type="button" data-w="8">8 wk</button><button type="button" data-w="13">13 wk</button><button type="button" data-w="26">26 wk</button></span></span>
+  <span>Limits <span class="seg" id="k-k"><button type="button" data-k="2">±2 SD</button><button type="button" data-k="3">±3 SD</button></span></span>
+  <label class="chk" for="k-ex"><input type="checkbox" id="k-ex"> Exclude planned event weeks</label>
+ </div><p class="note" id="k-why"></p></div>
+ <div class="grid">
+  <div class="panel s8"><div class="chart" id="k-c"></div></div>
+  <div class="panel s4"><h2>This KPI</h2><div class="kv" id="k-stats"></div><p class="note">Run rules: R1 one week beyond the limit · R2 two of three beyond 2 SD · R3 four of five beyond 1 SD · R4 eight in a row on one side.</p></div>
+  <div class="panel s12"><div class="ph"><h2>All KPIs on these settings</h2><small>Settings here also drive the dashboard</small></div><div class="tbl" id="k-all"></div></div>
+ </div>
+ <nav class="pager" aria-label="Page navigation"></nav>
+</section>
+
+<!-- ================= PRICING ================= -->
+<section class="view" id="v-pricing" hidden aria-labelledby="h-p">
+ <div class="vh"><span class="eyebrow">Pricing strategy &amp; architecture · real web prices</span><h1 id="h-p">Tickets sit well above peers, but shoppers pay about peer prices</h1>
+ <p class="lead">611 public listings from Gap, Levi's, American Eagle, Uniqlo and Old Navy, captured 3 Nov 2026 during a 40–50% off event. Mainline items only; collaborations are excluded from the index.</p></div>
+ <div class="grid">
+  <div class="panel s7"><div class="ph"><h2>List price vs price shown</h2><span class="seg" id="p-cat"><button type="button" data-c="Jeans">Jeans</button><button type="button" data-c="Tees">Tees</button><button type="button" data-c="Hoodies">Hoodies</button></span></div><div class="chart" id="p-c"></div></div>
+  <div class="panel s5"><h2>Price position</h2><div id="p-sum"></div></div>
+  <div class="panel s7"><div class="ph"><h2>Gap price ladder: listings at each price</h2><span class="seg" id="l-cat"><button type="button" data-c="Jeans">Jeans</button><button type="button" data-c="Tees">Tees</button><button type="button" data-c="Hoodies">Hoodies</button></span></div><div class="chart" id="l-c"></div></div>
+  <div class="panel s5"><h2>Good-better-best check</h2><div id="l-sum"></div><p class="note">Rules of thumb: tiers 10–35% apart read as clearly different but still reachable. One price holding over 50% of listings leaves no room to trade up.</p></div>
+ </div>
+ <nav class="pager" aria-label="Page navigation"></nav>
+</section>
+
+<!-- ================= TACTICS ================= -->
+<section class="view" id="v-tactics" hidden aria-labelledby="h-t">
+ <div class="vh"><span class="eyebrow">Pricing tactics · elasticity · pull-forward</span><h1 id="h-t">Discounts earn their keep up to about 31% off</h1>
+ <p class="lead">The 52 weeks are grouped by discount depth, and each category gets its own price elasticity and a pull-forward test: do the weeks after a deep promotion sell less than expected?</p></div>
+ <div class="grid">
+  <div class="panel s12"><h2>Outcomes by discount depth band</h2><div class="tbl" id="t-bands"></div></div>
+  <div class="panel s7"><div class="ph"><h2>Predicted lift vs break-even</h2><span class="seg" id="t-cat"><button type="button" data-c="Denim">Denim</button><button type="button" data-c="Knits">Knits</button><button type="button" data-c="Tees">Tees</button></span></div><div class="chart" id="t-c"></div><p class="note">Where the solid line sits above the dashed line, the promotion pays for itself.</p></div>
+  <div class="panel s5"><h2>Category profile</h2><div id="t-sum"></div><h3>Pull-forward by category</h3><div class="chart" id="t-pf"></div></div>
+ </div>
+ <nav class="pager" aria-label="Page navigation"></nav>
+</section>
+
+<!-- ================= SCENARIOS ================= -->
+<section class="view" id="v-scenarios" hidden aria-labelledby="h-sc">
+ <div class="vh"><span class="eyebrow">What-if scenarios · method checks</span><h1 id="h-sc">The 14% outlier weeks drive a fifth to a third of every KPI's volatility</h1>
+ <p class="lead">Scenario A is the middle 86% of weeks; scenario B is the 14% outliers, 7% on each tail. The window test shows which baseline length catches real events without false alarms.</p></div>
+ <div class="grid">
+  <div class="panel s7"><h2>Standard deviation cut by removing outliers</h2><div class="chart" id="s-c"></div></div>
+  <div class="panel s5"><h2>Which window works best?</h2><p class="note">Average of 11 KPIs, ±2 SD limits</p><div class="chart" id="s-w"></div></div>
+  <div class="panel s12"><h2>Middle 86% vs outlier 14%</h2><div class="tbl" id="s-t"></div></div>
+ </div>
+ <nav class="pager" aria-label="Page navigation"></nav>
+</section>
+
+<!-- ================= SIGN-OFF ================= -->
+<section class="view" id="v-signoff" hidden aria-labelledby="h-so">
+ <div class="vh"><span class="eyebrow">Pricing guardrails · approval workflow</span><h1 id="h-so">Deeper discounts need more senior sign-off</h1>
+ <p class="lead">Submit a request. It is scored against normal weeks, matched to an approval tier and tested for break-even. The log is saved in this browser only; use Copy as CSV to move it into Excel.</p></div>
+ <div class="panel"><h2>Approval ladder</h2><div class="ladder" id="so-ladder"></div><p class="note">Depths convert from z-scores using the current normal range for discount depth. Planned events skip the ladder but still take the break-even test.</p></div>
+ <div class="cnt" id="so-counts"></div>
+ <div class="grid">
+  <div class="panel s5"><h2>New discount request</h2>
+   <form id="sof" novalidate>
+    <div class="fr">
+     <label for="f-week">Promo fiscal week<input id="f-week" name="week" type="text" value="FY26-W46"></label>
+     <label for="f-cat">Category / channel<input id="f-cat" name="cat" type="text" value="Denim / online"></label>
+     <label for="f-mech">Mechanism<select id="f-mech" name="mech"><option>Category promo</option><option>Sitewide % off</option><option>BOGO</option><option>Loyalty offer</option><option>Clearance markdown</option></select></label>
+     <label for="f-team">Requesting team<input id="f-team" name="team" type="text" value="Merch - Denim"></label>
+     <label for="f-depth">Discount depth (%)<input id="f-depth" name="depth" type="number" min="0" max="90" step="1" value="30" inputmode="numeric"></label>
+     <label for="f-lift">Expected unit lift (%)<input id="f-lift" name="lift" type="number" step="1" value="80" inputmode="numeric"></label>
+    </div>
+    <label class="chk" for="f-planned"><input id="f-planned" name="planned" type="checkbox"> Planned event, pre-approved against a gross-profit target</label>
+    <label for="f-notes">Notes / rationale<textarea id="f-notes" name="notes" placeholder="Sell-through forecast, competitor price, inventory position"></textarea></label>
+    <div class="live" id="so-live" aria-live="polite"></div>
+    <div class="flow"><button class="btn" type="submit">Submit request</button><button class="btn ghost" type="button" data-go="simulator">Model it first</button></div>
+    <p class="msg" id="so-msg" aria-live="polite"></p>
+   </form></div>
+  <div class="panel s7"><div class="ph"><h2>Request log</h2><div class="flow"><label for="so-filter" class="chk">Show <select id="so-filter" style="width:auto"><option value="all">All</option><option>Pending</option><option>Approved</option><option>Rejected</option><option>Needs info</option></select></label><button class="btn ghost sm" type="button" id="so-copy">Copy as CSV</button><button class="btn ghost sm" type="button" id="so-reset">Reset to examples</button></div></div>
+   <div class="tbl" id="so-t"></div><textarea id="so-csv" hidden aria-label="CSV export" rows="5"></textarea></div>
+ </div>
+ <nav class="pager" aria-label="Page navigation"></nav>
+</section>
+
+<!-- ================= GUIDE ================= -->
+<section class="view" id="v-guide" hidden aria-labelledby="h-g">
+ <div class="vh"><span class="eyebrow">For HR and hiring managers</span><h1 id="h-g">How this model works</h1>
+ <p class="lead">A walk-through of how the model meets the responsibilities of a Manager, Pricing Strategy &amp; Analytics, and how to check its numbers.</p></div>
+ <div class="grid">
+  <div class="panel s6"><h2>Suggested five-minute tour</h2><ol class="steps">
+   <li><button class="linkbtn" type="button" data-go="dashboard">Dashboard</button>: read the four headline numbers, then click the red <b>Discount depth</b> tile.</li>
+   <li><button class="linkbtn" type="button" data-go="kpis">KPI control charts</button>: switch the window between 8, 13 and 26 weeks and watch the normal range move.</li>
+   <li><button class="linkbtn" type="button" data-go="simulator">Discount simulator</button>: try the <b>Tees 40% off</b> and <b>Denim 30% off</b> examples and compare the verdicts.</li>
+   <li><button class="linkbtn" type="button" data-go="pricing">Price position</button>: compare Gap's ticket prices with peers on real web data.</li>
+   <li><button class="linkbtn" type="button" data-go="signoff">Sign-off tracker</button>: submit a request and change its decision in the log.</li></ol></div>
+  <div class="panel s6"><h2>Job description → where it lives</h2><div class="tbl"><table><thead><tr><th>Responsibility</th><th>Section</th></tr></thead><tbody>
+   <tr><td>Pricing strategy, architecture and tactics</td><td>Price position · Tactics</td></tr>
+   <tr><td>Own the strategic discount budget and KPIs</td><td>Dashboard · KPI control charts</td></tr>
+   <tr><td>Pricing guardrails and approval</td><td>Sign-off tracker</td></tr>
+   <tr><td>In-season reconciliation, what-if scenarios</td><td>Simulator · Scenarios</td></tr>
+   <tr><td>Competitive price benchmarking</td><td>Price position</td></tr>
+   <tr><td>Repeatable analytics, AI validation</td><td>This page · method notes</td></tr></tbody></table></div></div>
+  <div class="panel s6"><h2>Glossary</h2><dl class="gl">
+   <dt>Discount depth</dt><dd>Average % off the ticket price across units sold.</dd>
+   <dt>Normal range</dt><dd>Mean ± 2 (or 3) standard deviations of the prior 8, 13 or 26 weeks.</dd>
+   <dt>z-score</dt><dd>How many standard deviations a week sits from normal. Beyond ±2 is unusual.</dd>
+   <dt>Break-even lift</dt><dd>Extra units needed to earn the same gross profit: depth ÷ (margin − depth).</dd>
+   <dt>Coverage</dt><dd>Actual or predicted lift ÷ break-even lift. Below 1.0× loses money.</dd>
+   <dt>Price elasticity</dt><dd>% change in units for a 1% change in price paid. −2 means a 10% cut sells about 23% more.</dd>
+   <dt>Pull-forward</dt><dd>A deep promotion that borrows sales from the weeks after it.</dd>
+   <dt>Price index</dt><dd>Gap average price ÷ peer average × 100. 100 = priced like peers.</dd>
+   <dt>Price realized</dt><dd>Price actually paid ÷ ticket price.</dd></dl></div>
+  <div class="panel s6"><h2>Method and data notes</h2><ul class="att">
+   <li><b>Source:</b> Discount_Budget_KPI_Workbook.xlsx (28 sheets, ~22,600 formulas recalculated with zero errors) and its SQL Server query set.</li>
+   <li><b>Simulated:</b> 52 weeks of sales, cost and customer data for a Gap-brand online channel scaled to public FY2025 figures.</li>
+   <li><b>Real:</b> competitor list and shown prices (611 listings, 3 Nov 2026, one-day snapshot) and public KPI benchmarks cited in the workbook.</li>
+   <li><b>Live in this page:</b> rolling means, standard deviations, z-scores, run rules, break-even, gross-profit change, approval tiers and the simulator. Elasticity fits, depth bands, scenarios and price summaries are read from the workbook.</li>
+   <li><b>Validation:</b> this page's 13-week figures reproduce the workbook's Std Dev sheet (e.g. latest discount depth z = +4.09).</li>
+   <li><b>Limits:</b> elasticity ignores returns and brand effects; overlapping pull-forward windows make z a rough guide. Confirm with a hold-out test before acting.</li></ul></div>
+ </div>
+ <nav class="pager" aria-label="Page navigation"></nav>
+</section>
+</main>
+<footer class="foot"><div class="wrap">Built by Thomas Powanda · tpowanda@gmail.com · Independent case study, not affiliated with or endorsed by Gap Inc. Sales data simulated; competitor prices are real public listings.</div></footer>
+
+<script>window.D={"kpiNames": ["1. Conversion Rate", "2. Average Order Value (AOV)", "3. Customer Lifetime Value (CLV)", "4. Repeat Purchase Rate", "5. Profit Margin Impact", "6. Discount Impact (Net Gross Profit Change)", "7. Break-even Coverage", "8. CLV : CAC Ratio", "9. Discount Depth (Budget Control)", "10. Discount Budget Variance", "11. Net Promoter Score (NPS)"], "better": ["Higher", "Higher", "Higher", "Higher", "Higher", "Higher", "Higher", "Lower", "Target", "Higher", null], "unit": ["$ per order", "$ margin per customer", "% of customers", "% of net sales", "% vs no-promo baseline", "actual lift / break-even lift", "ratio", "% of ticket price", "% over/under plan", "score -100 to +100", null], "bench": [82.5, 312, 0.26, 0.073, null, null, 3, null, null, null, null], "target": [90, 300, 0.3, 0.2, 0, 1, 3, 0.3, 0, 40, null], "weeks": [{"wk": "FY25-W01", "start": "2025-02-02", "gross": 37007494, "disc": 10266115, "net": 26741379, "cogs": 11528182, "units": 713784, "base": 412549, "budget": 9797366, "ex": false, "ev": "", "k": [0.019331, 91.49202, 312.299404, 0.309047, 0.262743, 0.033056, 1.082042, 5.90323, 0.277406, 0.047844, 38.6], "lift": 0.68849, "gp": 52.9031363234453, "bgp": 15213197}, {"wk": "FY25-W02", "start": "2025-02-09", "gross": 35405550, "disc": 10749106, "net": 24656444, "cogs": 11628824, "units": 704507, "base": 400387, "budget": 9481812, "ex": false, "ev": "", "k": [0.019946, 85.112322, 269.822605, 0.276021, 0.209127, -0.035908, 0.920572, 5.114389, 0.303599, 0.133655, 35.8], "lift": 0.67155, "gp": 52.7575416398599, "bgp": 13027620}, {"wk": "FY25-W03", "start": "2025-02-16", "gross": 36564197, "disc": 9635230, "net": 26928967, "cogs": 11241189, "units": 689671, "base": 406508, "budget": 9324188, "ex": false, "ev": "", "k": [0.019749, 90.854691, 317.570642, 0.315216, 0.28237, 0.051039, 1.13414, 6.19356, 0.263515, 0.033359, 37.5], "lift": 0.69256, "gp": 51.2743276021973, "bgp": 15687778}, {"wk": "FY25-W04", "start": "2025-02-23", "gross": 37647582, "disc": 10879695, "net": 26767887, "cogs": 12502217, "units": 742829, "base": 431515, "budget": 10896111, "ex": false, "ev": "", "k": [0.022012, 84.712792, 270.880867, 0.289572, 0.218042, -0.023376, 0.945972, 4.71731, 0.288988, -0.001507, 38.2], "lift": 0.66791, "gp": 57.4227359147639, "bgp": 14265670}, {"wk": "FY25-W05", "start": "2025-03-02", "gross": 39823571, "disc": 10924376, "net": 28899195, "cogs": 12395555, "units": 755036, "base": 456201, "budget": 10392233, "ex": false, "ev": "", "k": [0.019929, 97.191769, 333.023387, 0.293873, 0.286878, -0.004143, 0.989597, 6.787291, 0.274319, 0.051206, 36.9], "lift": 0.68874, "gp": 49.0657307402804, "bgp": 16503640}, {"wk": "FY25-W06", "start": "2025-03-09", "gross": 37658310, "disc": 10826150, "net": 26832160, "cogs": 12210033, "units": 721402, "base": 404788, "budget": 11602252, "ex": false, "ev": "", "k": [0.019657, 89.84995, 293.781203, 0.296274, 0.242487, 0.024005, 1.056426, 5.638197, 0.287484, -0.066892, 38], "lift": 0.67577, "gp": 52.105523481549, "bgp": 14622127}, {"wk": "FY25-W07", "start": "2025-03-16", "gross": 34888819, "disc": 9444653, "net": 25444166, "cogs": 11067735, "units": 658532, "base": 380791, "budget": 10023424, "ex": false, "ev": "", "k": [0.019137, 96.030216, 325.553238, 0.324881, 0.266725, 0.04371, 1.110244, 6.454783, 0.270707, -0.057742, 37.3], "lift": 0.68277, "gp": 50.4359689346057, "bgp": 14376431}, {"wk": "FY25-W08", "start": "2025-03-23", "gross": 32221148, "disc": 8810663, "net": 23410485, "cogs": 10750628, "units": 637431, "base": 383502, "budget": 9203423, "ex": false, "ev": "", "k": [0.018146, 88.627737, 287.567168, 0.306829, 0.205626, -0.019942, 0.951404, 4.862803, 0.273443, -0.042675, 39.5], "lift": 0.66635, "gp": 59.1360931816748, "bgp": 12659857}, {"wk": "FY25-W09", "start": "2025-03-30", "gross": 31387709, "disc": 7128897, "net": 24258812, "cogs": 9940381, "units": 600900, "base": 369555, "budget": 6770485, "ex": false, "ev": "", "k": [0.017786, 93.866684, 332.421136, 0.333684, 0.266062, 0.085539, 1.257344, 5.192698, 0.227124, 0.052937, 40.9], "lift": 0.6833, "gp": 64.0170305676856, "bgp": 14318431}, {"wk": "FY25-W10", "start": "2025-04-06", "gross": 36177074, "disc": 10466236, "net": 25710838, "cogs": 11671225, "units": 694305, "base": 382303, "budget": 10710853, "ex": false, "ev": "", "k": [0.019027, 91.392916, 299.435089, 0.297158, 0.224036, 0.040466, 1.094748, 5.058424, 0.289306, -0.022838, 40.3], "lift": 0.67739, "gp": 59.1953353341572, "bgp": 14039613}, {"wk": "FY25-W11", "start": "2025-04-13", "gross": 32696697, "disc": 8853237, "net": 23843460, "cogs": 10752984, "units": 637731, "base": 356951, "budget": 9047691, "ex": false, "ev": "", "k": [0.019573, 90.246401, 297.281101, 0.30361, 0.224943, 0.065796, 1.163084, 5.122107, 0.270769, -0.021492, 37.1], "lift": 0.67113, "gp": 58.0388357419092, "bgp": 13090476}, {"wk": "FY25-W12", "start": "2025-04-20", "gross": 36060129, "disc": 10356698, "net": 25703431, "cogs": 11982160, "units": 693420, "base": 380179, "budget": 10127937, "ex": false, "ev": "", "k": [0.018968, 89.809333, 287.657673, 0.323648, 0.236822, 0.0394, 1.0916, 5.973636, 0.287206, 0.022587, 36.2], "lift": 0.66772, "gp": 48.1545363165928, "bgp": 13721271}, {"wk": "FY25-W13", "start": "2025-04-27", "gross": 36725799, "disc": 10324529, "net": 26401270, "cogs": 11172339, "units": 675070, "base": 369524, "budget": 10924038, "ex": false, "ev": "", "k": [0.019724, 88.921907, 307.754648, 0.292935, 0.251144, 0.088744, 1.219644, 4.806021, 0.281125, -0.05488, 37.4], "lift": 0.69579, "gp": 64.0352219898902, "bgp": 15228931}, {"wk": "FY25-W14", "start": "2025-05-04", "gross": 36055575, "disc": 9055700, "net": 26999875, "cogs": 12046793, "units": 726170, "base": 418983, "budget": 8860827, "ex": false, "ev": "", "k": [0.019992, 90.273715, 299.972557, 0.313542, 0.235629, 0.07945, 1.21064, 4.93155, 0.251159, 0.021993, 36.5], "lift": 0.66588, "gp": 60.8272349837032, "bgp": 14953082}, {"wk": "FY25-W15", "start": "2025-05-11", "gross": 33528019, "disc": 8918450, "net": 24609569, "cogs": 10873826, "units": 649767, "base": 366967, "budget": 10254988, "ex": false, "ev": "", "k": [0.019789, 85.644078, 286.811618, 0.324628, 0.225067, 0.073579, 1.186903, 4.582131, 0.266, -0.130331, 38.4], "lift": 0.67568, "gp": 62.5934978736934, "bgp": 13735743}, {"wk": "FY25-W16", "start": "2025-05-18", "gross": 39187981, "disc": 11410219, "net": 27777762, "cogs": 11783908, "units": 728294, "base": 396870, "budget": 11015022, "ex": false, "ev": "", "k": [0.019542, 96.838589, 334.545798, 0.294121, 0.285021, 0.071017, 1.170563, 5.666468, 0.291166, 0.035878, 34.9], "lift": 0.6993, "gp": 59.0395640064039, "bgp": 15993854}, {"wk": "FY25-W17", "start": "2025-05-25", "gross": 36337872, "disc": 8851367, "net": 27486505, "cogs": 11353002, "units": 686281, "base": 414756, "budget": 8567036, "ex": false, "ev": "", "k": [0.018993, 98.509465, 346.927211, 0.318262, 0.290303, 0.068466, 1.193261, 5.280161, 0.243585, 0.033189, 40.1], "lift": 0.68757, "gp": 65.7039089782584, "bgp": 16133503}, {"wk": "FY25-W18", "start": "2025-06-01", "gross": 35136682, "disc": 10924123, "net": 24212559, "cogs": 10977999, "units": 676795, "base": 358028, "budget": 11129969, "ex": false, "ev": "", "k": [0.01971, 84.591269, 277.425008, 0.294133, 0.218702, 0.035563, 1.078647, 5.112866, 0.310904, -0.018495, 35.2], "lift": 0.68756, "gp": 54.2601804629266, "bgp": 13234560}, {"wk": "FY25-W19", "start": "2025-06-08", "gross": 34211132, "disc": 10810336, "net": 23400796, "cogs": 11025174, "units": 664151, "base": 376709, "budget": 11184662, "ex": false, "ev": "", "k": [0.018407, 85.730705, 272.03454, 0.306643, 0.211903, -0.058971, 0.873518, 5.007942, 0.315989, -0.033468, 32.5], "lift": 0.67773, "gp": 54.3206227106227, "bgp": 12375622}, {"wk": "FY25-W20", "start": "2025-06-15", "gross": 33530464, "disc": 7461651, "net": 26068813, "cogs": 11251774, "units": 674242, "base": 414157, "budget": 7529478, "ex": false, "ev": "", "k": [0.01998, 94.287218, 321.546837, 0.347631, 0.265483, 0.082736, 1.24703, 6.090015, 0.222533, -0.009008, 38.5], "lift": 0.66443, "gp": 52.7990203761756, "bgp": 14817039}, {"wk": "FY25-W21", "start": "2025-06-22", "gross": 36385311, "disc": 10612216, "net": 25773095, "cogs": 11372480, "units": 687164, "base": 369116, "budget": 10524723, "ex": false, "ev": "", "k": [0.01884, 93.980758, 315.068262, 0.302151, 0.252803, 0.071805, 1.169243, 5.82019, 0.291662, 0.008313, 39.4], "lift": 0.68744, "gp": 54.1336762975813, "bgp": 14400615}, {"wk": "FY25-W22", "start": "2025-06-29", "gross": 32730209, "disc": 9560589, "net": 23169620, "cogs": 10441070, "units": 640374, "base": 370631, "budget": 9452820, "ex": false, "ev": "", "k": [0.018933, 84.794616, 279.498543, 0.289977, 0.204246, -0.013317, 0.968953, 4.458202, 0.292103, 0.011401, 38.2], "lift": 0.681, "gp": 62.6931103268375, "bgp": 12728550}, {"wk": "FY25-W23", "start": "2025-07-06", "gross": 33908267, "disc": 9213904, "net": 24694363, "cogs": 10701634, "units": 654493, "base": 358434, "budget": 8885166, "ex": false, "ev": "", "k": [0.018574, 94.598108, 321.61648, 0.320517, 0.253614, 0.100997, 1.254376, 5.929464, 0.27173, 0.036999, 37.4], "lift": 0.68439, "gp": 54.240392978572, "bgp": 13992729}, {"wk": "FY25-W24", "start": "2025-07-13", "gross": 36750002, "disc": 11081212, "net": 25668790, "cogs": 11449676, "units": 697688, "base": 370889, "budget": 10778886, "ex": false, "ev": "", "k": [0.020006, 85.668863, 284.735352, 0.283297, 0.258339, 0.057216, 1.130634, 5.731819, 0.30153, 0.028048, 35.8], "lift": 0.68844, "gp": 49.676262852034, "bgp": 14219114}, {"wk": "FY25-W25", "start": "2025-07-20", "gross": 32615991, "disc": 9540592, "net": 23075399, "cogs": 10434928, "units": 626221, "base": 353111, "budget": 9551934, "ex": false, "ev": "", "k": [0.019464, 87.041504, 286.082751, 0.300708, 0.21714, 0.010642, 1.024741, 5.052087, 0.292513, -0.001187, 37.4], "lift": 0.68007, "gp": 56.6266451625749, "bgp": 12640471}, {"wk": "FY25-W26", "start": "2025-07-27", "gross": 37379432, "disc": 10407294, "net": 26972138, "cogs": 11995630, "units": 708160, "base": 436454, "budget": 9460881, "ex": false, "ev": "", "k": [0.017795, 93.295624, 310.81911, 0.306538, 0.231507, -0.042703, 0.895846, 4.523146, 0.278423, 0.100034, 35], "lift": 0.67908, "gp": 68.7174582956693, "bgp": 14976508}, {"wk": "FY25-W27", "start": "2025-08-03", "gross": 37991728, "disc": 11368738, "net": 26622990, "cogs": 11721340, "units": 720453, "base": 399323, "budget": 11075706, "ex": false, "ev": "", "k": [0.019723, 86.107826, 289.1821, 0.292787, 0.242473, 0.023409, 1.054092, 5.311906, 0.299242, 0.026457, 38.9], "lift": 0.69148, "gp": 54.4403665268986, "bgp": 14901650}, {"wk": "FY25-W28", "start": "2025-08-10", "gross": 40708219, "disc": 11679525, "net": 29028694, "cogs": 13078887, "units": 785319, "base": 421167, "budget": 10979487, "ex": false, "ev": "", "k": [0.020517, 87.541825, 288.598972, 0.301017, 0.247816, 0.076408, 1.180752, 5.116195, 0.286908, 0.063759, 36], "lift": 0.67872, "gp": 56.4089069508617, "bgp": 15949807}, {"wk": "FY25-W29", "start": "2025-08-17", "gross": 37306265, "disc": 11156605, "net": 26149660, "cogs": 12486069, "units": 734350, "base": 402635, "budget": 11204410, "ex": false, "ev": "", "k": [0.019867, 85.620932, 268.429354, 0.292978, 0.203392, 0.00404, 1.008989, 4.330928, 0.299054, -0.004267, 35.6], "lift": 0.66531, "gp": 61.9796333259407, "bgp": 13663591}, {"wk": "FY25-W30", "start": "2025-08-24", "gross": 40076541, "disc": 12153712, "net": 27922829, "cogs": 12723565, "units": 768816, "base": 411646, "budget": 12269799, "ex": false, "ev": "", "k": [0.020385, 86.051166, 281.041952, 0.299589, 0.234142, 0.037807, 1.085087, 5.456414, 0.303262, -0.009461, 39.1], "lift": 0.68252, "gp": 51.506712537003, "bgp": 15199264}, {"wk": "FY25-W31", "start": "2025-08-31", "gross": 32393717, "disc": 9110376, "net": 23283341, "cogs": 10419744, "units": 623041, "base": 341651, "budget": 9025261, "ex": false, "ev": "", "k": [0.019552, 85.455056, 283.273626, 0.287807, 0.215282, 0.067549, 1.162926, 4.468381, 0.281239, 0.009431, 39.2], "lift": 0.67834, "gp": 63.3951340987725, "bgp": 12863597}, {"wk": "FY25-W32", "start": "2025-09-07", "gross": 37903958, "disc": 10663208, "net": 27240750, "cogs": 12059936, "units": 733566, "base": 408802, "budget": 10389286, "ex": false, "ev": "", "k": [0.020566, 87.685288, 293.19326, 0.271265, 0.262958, 0.05405, 1.130999, 6.533802, 0.281322, 0.026366, 41], "lift": 0.68183, "gp": 44.8733017481883, "bgp": 15180814}, {"wk": "FY25-W33", "start": "2025-09-14", "gross": 34736445, "disc": 10333163, "net": 24403282, "cogs": 10956258, "units": 675998, "base": 379628, "budget": 10527785, "ex": false, "ev": "", "k": [0.019823, 85.798653, 283.667554, 0.294396, 0.224858, 0.006927, 1.015942, 5.526057, 0.297473, -0.018487, 35.4], "lift": 0.68459, "gp": 51.3327209566437, "bgp": 13447024}, {"wk": "FY25-W34", "start": "2025-09-21", "gross": 34661763, "disc": 8002931, "net": 26658832, "cogs": 11099277, "units": 686161, "base": 442629, "budget": 8232781, "ex": false, "ev": "", "k": [0.020191, 96.897515, 339.328194, 0.308703, 0.295738, 0.023675, 1.069706, 6.718109, 0.230886, -0.027919, 39.2], "lift": 0.67978, "gp": 50.5094801551136, "bgp": 15559555}, {"wk": "FY25-W35", "start": "2025-09-28", "gross": 36450406, "disc": 11479443, "net": 24970963, "cogs": 11488660, "units": 709255, "base": 356849, "budget": 11354017, "ex": false, "ev": "", "k": [0.019939, 85.659861, 277.496434, 0.305132, 0.224658, 0.073512, 1.159851, 5.295569, 0.314933, 0.011047, 35.1], "lift": 0.68481, "gp": 52.4016273541781, "bgp": 13482303}, {"wk": "FY25-W36", "start": "2025-10-05", "gross": 39163893, "disc": 12676959, "net": 26486934, "cogs": 13035160, "units": 783540, "base": 423652, "budget": 12360261, "ex": false, "ev": "", "k": [0.021929, 82.788485, 252.272005, 0.276671, 0.218574, -0.047833, 0.90141, 5.397377, 0.32369, 0.025622, 34.2], "lift": 0.66716, "gp": 46.7397377752123, "bgp": 13451774}, {"wk": "FY25-W37", "start": "2025-10-12", "gross": 32748276, "disc": 9049693, "net": 23698583, "cogs": 10640102, "units": 641022, "base": 359935, "budget": 9540991, "ex": false, "ev": "", "k": [0.018545, 88.213269, 291.645615, 0.309343, 0.228347, 0.051934, 1.126874, 5.162054, 0.276341, -0.051493, 37.7], "lift": 0.67509, "gp": 56.4979818566918, "bgp": 13058481}, {"wk": "FY25-W38", "start": "2025-10-19", "gross": 36966218, "disc": 10287490, "net": 26678728, "cogs": 11813535, "units": 709703, "base": 387459, "budget": 9853730, "ex": false, "ev": "", "k": [0.019701, 91.740954, 306.704348, 0.310215, 0.257065, 0.082523, 1.201767, 5.89561, 0.278294, 0.04402, 35.7], "lift": 0.68042, "gp": 52.0224944535546, "bgp": 14865193}, {"wk": "FY25-W39", "start": "2025-10-26", "gross": 36765969, "disc": 10430760, "net": 26335209, "cogs": 11944494, "units": 713833, "base": 398433, "budget": 10488843, "ex": false, "ev": "", "k": [0.019878, 90.894438, 298.01228, 0.294403, 0.242209, 0.038714, 1.092126, 5.611035, 0.283707, -0.005538, 34.9], "lift": 0.67512, "gp": 53.1118227181643, "bgp": 14390715}, {"wk": "FY25-W40", "start": "2025-11-02", "gross": 31062647, "disc": 8798796, "net": 22263851, "cogs": 10490793, "units": 624096, "base": 352052, "budget": 8603039, "ex": false, "ev": "", "k": [0.018516, 85.285773, 270.593174, 0.300699, 0.195081, 0.01452, 1.033947, 3.935337, 0.28326, 0.022754, 38.3], "lift": 0.66227, "gp": 68.7598399258193, "bgp": 11773058}, {"wk": "FY25-W41", "start": "2025-11-09", "gross": 36115585, "disc": 10340311, "net": 25775274, "cogs": 11691568, "units": 702003, "base": 417426, "budget": 9820095, "ex": false, "ev": "", "k": [0.019666, 86.60057, 283.913249, 0.280824, 0.239651, -0.030251, 0.928546, 5.119445, 0.286312, 0.052975, 39], "lift": 0.67627, "gp": 55.4578202873058, "bgp": 14083706}, {"wk": "FY25-W42", "start": "2025-11-16", "gross": 32215988, "disc": 8260038, "net": 23955950, "cogs": 10319058, "units": 613420, "base": 363187, "budget": 8265972, "ex": false, "ev": "", "k": [0.019117, 92.927798, 317.394137, 0.323855, 0.250631, 0.051865, 1.13749, 5.050166, 0.256396, -0.000718, 41.1], "lift": 0.67969, "gp": 62.8482632116653, "bgp": 13636892}, {"wk": "FY25-W43", "start": "2025-11-23", "gross": 105330022, "disc": 43185309, "net": 62144713, "cogs": 32977343, "units": 1962720, "base": 946631, "budget": 38558312, "ex": true, "ev": "Black Friday", "k": [0.031, 80.068948, 225.480223, 0.261023, 0.238286, -0.164166, 0.724957, 7.278788, 0.41, 0.12, 34.7], "lift": 0.68691, "gp": 30.9777135480094, "bgp": 29167370}, {"wk": "FY25-W44", "start": "2025-11-30", "gross": 50356247, "disc": 15880231, "net": 34476016, "cogs": 16486663, "units": 980149, "base": 540125, "budget": 15284042, "ex": true, "ev": "Holiday promo", "k": [0.019883, 91.223526, 285.59893, 0.312179, 0.237291, -0.036163, 0.922871, 6.757117, 0.315358, 0.039007, 37.3], "lift": 0.6726, "gp": 42.2663865456144, "bgp": 17989353}, {"wk": "FY25-W45", "start": "2025-12-07", "gross": 57798993, "disc": 20720647, "net": 37078346, "cogs": 18164917, "units": 1114327, "base": 593156, "budget": 20070221, "ex": true, "ev": "Holiday promo", "k": [0.022063, 89.394956, 273.598799, 0.265184, 0.227412, -0.10351, 0.802007, 6.762869, 0.358495, 0.032408, 32.1], "lift": 0.68572, "gp": 40.4560274391145, "bgp": 18913429}, {"wk": "FY25-W46", "start": "2025-12-14", "gross": 58649349, "disc": 20722573, "net": 37926776, "cogs": 18783216, "units": 1110225, "base": 574247, "budget": 20490934, "ex": true, "ev": "Holiday promo", "k": [0.020608, 87.511482, 265.028796, 0.26844, 0.222376, -0.071609, 0.862238, 6.739028, 0.35333, 0.011304, 32.9], "lift": 0.67974, "gp": 39.3274533790283, "bgp": 19143560}, {"wk": "FY25-W47", "start": "2025-12-21", "gross": 55579583, "disc": 19593087, "net": 35986496, "cogs": 18210499, "units": 1076575, "base": 572270, "budget": 19513664, "ex": true, "ev": "Holiday promo", "k": [0.021099, 84.621145, 250.798282, 0.24327, 0.215882, -0.10512, 0.799509, 6.388618, 0.352523, 0.00407, 35.1], "lift": 0.67235, "gp": 39.2570491559594, "bgp": 17775997}, {"wk": "FY25-W48", "start": "2025-12-28", "gross": 29678561, "disc": 9857600, "net": 19820961, "cogs": 9635098, "units": 582754, "base": 300996, "budget": 9726776, "ex": true, "ev": "January clearance", "k": [0.020134, 81.705598, 251.927854, 0.268658, 0.178546, -0.016103, 0.967258, 5.085165, 0.332145, 0.01345, 36.1], "lift": 0.67535, "gp": 49.5417273118632, "bgp": 10185863}, {"wk": "FY25-W49", "start": "2026-01-04", "gross": 31980869, "disc": 11975590, "net": 20005279, "cogs": 9917618, "units": 598969, "base": 292849, "budget": 11430293, "ex": true, "ev": "January clearance", "k": [0.020672, 76.976244, 232.891604, 0.244409, 0.162935, -0.064849, 0.880525, 4.020685, 0.374461, 0.047706, 34], "lift": 0.68989, "gp": 57.9233678993022, "bgp": 10087661}, {"wk": "FY25-W50", "start": "2026-01-11", "gross": 33453599, "disc": 11338098, "net": 22115501, "cogs": 10657415, "units": 660879, "base": 325572, "budget": 11638435, "ex": true, "ev": "January clearance", "k": [0.020032, 82.932092, 257.803712, 0.275742, 0.193127, 0.020293, 1.0408, 4.29164, 0.33892, -0.025806, 42.6], "lift": 0.68143, "gp": 60.0711479504939, "bgp": 11458086}, {"wk": "FY25-W51", "start": "2026-01-18", "gross": 36986488, "disc": 13675381, "net": 23311107, "cogs": 11442250, "units": 699113, "base": 359472, "budget": 13236092, "ex": true, "ev": "January clearance", "k": [0.022847, 81.669278, 249.491622, 0.268627, 0.19632, -0.096354, 0.82002, 5.343682, 0.36974, 0.033189, 35.3], "lift": 0.69064, "gp": 46.6890821640388, "bgp": 11868857}, {"wk": "FY25-W52", "start": "2026-01-25", "gross": 36882883, "disc": 14070334, "net": 22812549, "cogs": 11771435, "units": 698139, "base": 343709, "budget": 14765628, "ex": true, "ev": "January clearance", "k": [0.022014, 82.746803, 240.293241, 0.261414, 0.15866, -0.106916, 0.809185, 4.528717, 0.381487, -0.047089, 33], "lift": 0.68084, "gp": 53.0598936410488, "bgp": 11041114}], "cats": {"Denim": [{"u": 217155, "b": 125664, "d": 0.2936}, {"u": 230916, "b": 121539, "d": 0.3273}, {"u": 199360, "b": 120239, "d": 0.2702}, {"u": 265050, "b": 131616, "d": 0.3348}, {"u": 222547, "b": 132931, "d": 0.2876}, {"u": 211244, "b": 114098, "d": 0.3271}, {"u": 219501, "b": 117479, "d": 0.3007}, {"u": 180442, "b": 111711, "d": 0.2745}, {"u": 154283, "b": 102491, "d": 0.2186}, {"u": 226099, "b": 120175, "d": 0.3158}, {"u": 176338, "b": 105050, "d": 0.2612}, {"u": 211538, "b": 115165, "d": 0.305}, {"u": 208129, "b": 114005, "d": 0.2879}, {"u": 198912, "b": 130448, "d": 0.2558}, {"u": 191616, "b": 111990, "d": 0.2883}, {"u": 212638, "b": 117534, "d": 0.316}, {"u": 200390, "b": 125337, "d": 0.2467}, {"u": 202676, "b": 105623, "d": 0.3362}, {"u": 231059, "b": 116245, "d": 0.335}, {"u": 172362, "b": 128305, "d": 0.2023}, {"u": 207147, "b": 111204, "d": 0.3236}, {"u": 207004, "b": 111631, "d": 0.3081}, {"u": 181416, "b": 102788, "d": 0.2763}, {"u": 227050, "b": 108295, "d": 0.3454}, {"u": 207485, "b": 107236, "d": 0.3185}, {"u": 238241, "b": 131389, "d": 0.3137}, {"u": 216986, "b": 117600, "d": 0.324}, {"u": 237807, "b": 123804, "d": 0.3311}, {"u": 211782, "b": 120687, "d": 0.3162}, {"u": 221753, "b": 121436, "d": 0.3044}, {"u": 162617, "b": 98870, "d": 0.3037}, {"u": 209254, "b": 118301, "d": 0.2996}, {"u": 190348, "b": 110899, "d": 0.284}, {"u": 200800, "b": 134586, "d": 0.2608}, {"u": 216161, "b": 114839, "d": 0.342}, {"u": 259107, "b": 128212, "d": 0.3424}, {"u": 198193, "b": 105254, "d": 0.2835}, {"u": 210357, "b": 116002, "d": 0.3047}, {"u": 198000, "b": 117140, "d": 0.2827}, {"u": 196047, "b": 111012, "d": 0.2831}, {"u": 221346, "b": 127192, "d": 0.3054}, {"u": 181887, "b": 109117, "d": 0.2882}, {"u": 679293, "b": 273268, "d": 0.428}, {"u": 304400, "b": 157514, "d": 0.3363}, {"u": 368102, "b": 180728, "d": 0.367}, {"u": 352467, "b": 177565, "d": 0.3879}, {"u": 373631, "b": 184796, "d": 0.3693}, {"u": 164419, "b": 87137, "d": 0.3522}, {"u": 182504, "b": 88000, "d": 0.3976}, {"u": 170999, "b": 95671, "d": 0.3288}, {"u": 225028, "b": 104987, "d": 0.4061}, {"u": 184050, "b": 97466, "d": 0.3751}], "Knits": [{"u": 300670, "b": 160415, "d": 0.2727}, {"u": 322105, "b": 164264, "d": 0.2786}, {"u": 296189, "b": 165145, "d": 0.2628}, {"u": 320840, "b": 168777, "d": 0.2797}, {"u": 359354, "b": 178057, "d": 0.2926}, {"u": 315951, "b": 157945, "d": 0.2859}, {"u": 276962, "b": 152861, "d": 0.2761}, {"u": 271693, "b": 144050, "d": 0.2928}, {"u": 241732, "b": 142856, "d": 0.2161}, {"u": 295459, "b": 155434, "d": 0.2971}, {"u": 258507, "b": 141992, "d": 0.2436}, {"u": 303045, "b": 157298, "d": 0.289}, {"u": 267712, "b": 141690, "d": 0.2745}, {"u": 308780, "b": 170768, "d": 0.2394}, {"u": 280315, "b": 149309, "d": 0.2702}, {"u": 320187, "b": 163147, "d": 0.291}, {"u": 296605, "b": 163757, "d": 0.2472}, {"u": 267271, "b": 142942, "d": 0.3075}, {"u": 322050, "b": 142992, "d": 0.3384}, {"u": 270739, "b": 158247, "d": 0.2328}, {"u": 320448, "b": 152290, "d": 0.3147}, {"u": 286333, "b": 151093, "d": 0.2954}, {"u": 280437, "b": 149710, "d": 0.2829}, {"u": 291781, "b": 147564, "d": 0.3164}, {"u": 296509, "b": 146059, "d": 0.2772}, {"u": 322250, "b": 173202, "d": 0.2998}, {"u": 356402, "b": 160107, "d": 0.3117}, {"u": 274154, "b": 162992, "d": 0.2588}, {"u": 349509, "b": 169709, "d": 0.3026}, {"u": 323471, "b": 161705, "d": 0.2786}, {"u": 258823, "b": 140443, "d": 0.2717}, {"u": 283036, "b": 165129, "d": 0.2459}, {"u": 318171, "b": 155404, "d": 0.2906}, {"u": 318432, "b": 184007, "d": 0.2443}, {"u": 329695, "b": 150817, "d": 0.3253}, {"u": 353109, "b": 168468, "d": 0.3232}, {"u": 264952, "b": 146727, "d": 0.2934}, {"u": 287117, "b": 159788, "d": 0.2491}, {"u": 297461, "b": 157468, "d": 0.2865}, {"u": 293070, "b": 144243, "d": 0.3106}, {"u": 335610, "b": 169267, "d": 0.2844}, {"u": 255094, "b": 145273, "d": 0.247}, {"u": 1154679, "b": 383590, "d": 0.4258}, {"u": 386627, "b": 199013, "d": 0.2991}, {"u": 621977, "b": 247824, "d": 0.3611}, {"u": 545392, "b": 234728, "d": 0.3511}, {"u": 590685, "b": 229530, "d": 0.3493}, {"u": 289139, "b": 124479, "d": 0.3375}, {"u": 287868, "b": 113435, "d": 0.3848}, {"u": 297424, "b": 130016, "d": 0.3474}, {"u": 347511, "b": 147156, "d": 0.3424}, {"u": 329086, "b": 131697, "d": 0.372}], "Tees": [{"u": 290996, "b": 125340, "d": 0.2741}, {"u": 251305, "b": 114021, "d": 0.2911}, {"u": 245175, "b": 123394, "d": 0.2481}, {"u": 290009, "b": 131909, "d": 0.2674}, {"u": 278764, "b": 130744, "d": 0.2607}, {"u": 260488, "b": 116101, "d": 0.2665}, {"u": 233738, "b": 112141, "d": 0.2599}, {"u": 258181, "b": 120032, "d": 0.257}, {"u": 211822, "b": 111390, "d": 0.2237}, {"u": 282234, "b": 117977, "d": 0.2885}, {"u": 221377, "b": 112258, "d": 0.2311}, {"u": 250788, "b": 117618, "d": 0.261}, {"u": 245787, "b": 109866, "d": 0.2589}, {"u": 257054, "b": 126997, "d": 0.244}, {"u": 255380, "b": 111959, "d": 0.2575}, {"u": 255037, "b": 125624, "d": 0.277}, {"u": 257616, "b": 122478, "d": 0.2278}, {"u": 243106, "b": 110658, "d": 0.2836}, {"u": 284009, "b": 115126, "d": 0.2909}, {"u": 232301, "b": 123691, "d": 0.2205}, {"u": 283352, "b": 106925, "d": 0.3128}, {"u": 223273, "b": 113241, "d": 0.2495}, {"u": 221104, "b": 103852, "d": 0.2517}, {"u": 266672, "b": 110945, "d": 0.3026}, {"u": 244451, "b": 105359, "d": 0.2943}, {"u": 264588, "b": 123654, "d": 0.2526}, {"u": 296378, "b": 123536, "d": 0.2783}, {"u": 279328, "b": 121680, "d": 0.2829}, {"u": 287570, "b": 124416, "d": 0.287}, {"u": 305842, "b": 123522, "d": 0.2952}, {"u": 191849, "b": 100125, "d": 0.2477}, {"u": 239913, "b": 125307, "d": 0.2322}, {"u": 283055, "b": 115004, "d": 0.2875}, {"u": 231577, "b": 140518, "d": 0.2038}, {"u": 261782, "b": 109953, "d": 0.3034}, {"u": 317682, "b": 130495, "d": 0.2983}, {"u": 253560, "b": 109538, "d": 0.2657}, {"u": 264745, "b": 120860, "d": 0.2478}, {"u": 282072, "b": 123250, "d": 0.2955}, {"u": 208510, "b": 98772, "d": 0.2672}, {"u": 278781, "b": 126013, "d": 0.2759}, {"u": 217011, "b": 108954, "d": 0.2388}, {"u": 904181, "b": 275762, "d": 0.3967}, {"u": 396280, "b": 160182, "d": 0.319}, {"u": 543112, "b": 181132, "d": 0.3382}, {"u": 532540, "b": 175356, "d": 0.3494}, {"u": 493814, "b": 176183, "d": 0.3274}, {"u": 241477, "b": 92611, "d": 0.3125}, {"u": 246608, "b": 83996, "d": 0.3545}, {"u": 254425, "b": 103027, "d": 0.2977}, {"u": 290957, "b": 107673, "d": 0.3213}, {"u": 336629, "b": 105074, "d": 0.3652}]}, "pi_rows": [["Jeans", "Gap", "-", 165, 88.0106060606061, 51.8473333333333, 0.410847304604209, 165], ["Jeans", "Levi's", "Y", 8, 74.95, 64.99, 0.13349071533187, 8], ["Jeans", "American Eagle", "Y", 30, 58.95, 34.9986666666667, 0.406752475191939, 30], ["Jeans", "Uniqlo", "Y", 5, 49.9, null, null, 0], ["Jeans", "Old Navy", "Y", 0, null, null, null, 0], ["Tees", "Gap", "-", 182, 40.6596153846154, 25.0753488372093, 0.397287532275326, 172], ["Tees", "Levi's", "Y", 0, null, null, null, 0], ["Tees", "American Eagle", "Y", 0, null, null, null, 0], ["Tees", "Uniqlo", "Y", 22, 23.9909090909091, 23.9909090909091, 0, 22], ["Tees", "Old Navy", "Y", 0, null, null, null, 0], ["Hoodies", "Gap", "-", 55, 73.5863636363636, 36.1452727272727, 0.509659065265613, 55], ["Hoodies", "Levi's", "Y", 0, null, null, null, 0], ["Hoodies", "American Eagle", "Y", 0, null, null, null, 0], ["Hoodies", "Uniqlo", "Y", 3, 53.2333333333333, 53.2333333333333, 0, 3], ["Hoodies", "Old Navy", "Y", 115, 53.9465217391304, 26.1284347826087, 0.51891158636385, 115]], "pi_sum": [["Jeans", 88.0106060606061, 61.2666666666667, 143.651696508062, 51.8473333333333, 49.9943333333333, 103.70642006094, 0.410847304604209, 0.270121595261905, 0.140725709342304, "High list, peer-level paid price", "Gap lists 44% above peers but sells at an effective index of 104 after 41% markdowns. Lower core list prices toward the 120 index or cut promo depth so list prices stay credible. Markdown runs 14 pts deeper than peers."], ["Tees", 40.6596153846154, 23.9909090909091, 169.479260792258, 25.0753488372093, 23.9909090909091, 104.520211144109, 0.397287532275326, 0, 0.397287532275326, "High list, peer-level paid price", "Gap lists 69% above peers but sells at an effective index of 105 after 40% markdowns. Lower core list prices toward the 120 index or cut promo depth so list prices stay credible. Markdown runs 40 pts deeper than peers."], ["Hoodies", 73.5863636363636, 53.5899275362319, 137.313795743822, 36.1452727272727, 39.680884057971, 91.0898877012594, 0.509659065265613, 0.259455793181925, 0.250203272083688, "High list, peer-level paid price", "Gap lists 37% above peers but sells at an effective index of 91 after 51% markdowns. Lower core list prices toward the 120 index or cut promo depth so list prices stay credible. Markdown runs 25 pts deeper than peers."]], "ladder": [["Jeans", "Mainline", 59.95, 1, 0.00584795321637427, null, "Entry point", 0.666889074228524], ["Jeans", "Mainline", 69.95, 3, 0.0175438596491228, 0.166805671392827, "OK", 0.556969263759828], ["Jeans", "Mainline", 79.95, 42, 0.245614035087719, 0.142959256611866, "OK", 0.423234759820126], ["Jeans", "Mainline", 89.95, 102, 0.596491228070175, 0.125078173858662, "OK", 0.382843409737436], ["Jeans", "Mainline", 99.95, 16, 0.0935672514619883, 0.111172873818788, "OK", 0.494853676838419], ["Jeans", "Mainline", 119.95, 1, 0.00584795321637427, 0.200100050025013, "OK", 0.708461859107962], ["Jeans", "Premium", 128, 2, 0.0116959064327485, 0.067111296373489, "Too close to mainline", 0.5], ["Jeans", "Collab", 118, 2, 0.0116959064327485, -0.0162567736556899, "Overlaps mainline", null], ["Jeans", "Collab", 148, 2, 0.0116959064327485, 0.233847436431847, "OK", null], ["Tees", "Mainline", 19.95, 14, 0.0752688172043011, null, "Entry point", 0.305406373075546], ["Tees", "Mainline", 24.95, 8, 0.043010752688172, 0.25062656641604, "OK", 0.639278557114228], ["Tees", "Mainline", 29.95, 19, 0.102150537634409, 0.200400801603206, "OK", 0.571080005136766], ["Tees", "Mainline", 34.95, 9, 0.0483870967741936, 0.166944908180301, "OK", 0.472261961532348], ["Tees", "Mainline", 39.95, 59, 0.317204301075269, 0.143061516452074, "OK", 0.373325748094209], ["Tees", "Mainline", 44.95, 26, 0.139784946236559, 0.125156445556946, "OK", 0.371096089672286], ["Tees", "Mainline", 48, 3, 0.0161290322580645, 0.067853170189099, "Compressed", 0.5], ["Tees", "Mainline", 49.95, 25, 0.134408602150538, 0.0406250000000001, "Compressed", 0.371371371371371], ["Tees", "Mainline", 54.95, 6, 0.032258064516129, 0.1001001001001, "OK", 0.265999393387928], ["Tees", "Mainline", 59.95, 12, 0.0645161290322581, 0.0909918107370336, "Compressed", 0.357798165137615], ["Tees", "Mainline", 69.95, 1, 0.00537634408602151, 0.166805671392827, "OK", 0.413867047891351], ["Tees", "Premium", 38, 1, 0.00537634408602151, -0.456754824874911, "Overlaps mainline", 0.5], ["Tees", "Premium", 78, 1, 0.00537634408602151, 0.115082201572552, "OK", 0.5], ["Tees", "Collab", 48, 1, 0.00537634408602151, -0.313795568263045, "Overlaps mainline", 0.5], ["Tees", "Collab", 58, 1, 0.00537634408602151, -0.170836311651179, "Overlaps mainline", 0.5], ["Hoodies", "Mainline", 59.95, 8, 0.115942028985507, null, "Entry point", 0.528773978315263], ["Hoodies", "Mainline", 69.95, 21, 0.304347826086957, 0.166805671392827, "OK", 0.513945335103305], ["Hoodies", "Mainline", 79.95, 23, 0.333333333333333, 0.142959256611866, "OK", 0.494792941240449], ["Hoodies", "Mainline", 84.95, 2, 0.0289855072463768, 0.0625390869293307, "Compressed", 0.558563861094762], ["Hoodies", "Mainline", 89.95, 1, 0.0144927536231884, 0.0588581518540319, "Compressed", 0.510839355197332], ["Hoodies", "Premium", 128, 1, 0.0144927536231884, 0.423012784880489, "OK", 0.5], ["Hoodies", "Collab", 98, 7, 0.101449275362319, 0.0894941634241244, "Too close to mainline", 0.694183673469388], ["Hoodies", "Collab", 118, 4, 0.0579710144927536, 0.311839911061701, "OK", 0.5], ["Hoodies", "Collab", 128, 2, 0.0289855072463768, 0.423012784880489, "OK", null]], "ladder_sum": [["Jeans", 6, 59.95, 119.95, 2.00083402835696, 0.596491228070175, 0, 0, 2, "Fix architecture", "60% of listings sit at one price point: build out a clear good-better-best around it. Premium/collab items overlap the top mainline price: lift them clearly above or fold into mainline."], ["Tees", 11, 19.95, 69.95, 3.5062656641604, 0.317204301075269, 3, 0, 3, "Fix architecture", "3 step(s) under 10%: merge or spread those points. Premium/collab items overlap the top mainline price: lift them clearly above or fold into mainline."], ["Hoodies", 5, 59.95, 89.95, 1.50041701417848, 0.333333333333333, 2, 0, 1, "Fix architecture", "2 step(s) under 10%: merge or spread those points. Premium/collab items overlap the top mainline price: lift them clearly above or fold into mainline."]], "bands": [["0% to 25%", 0, 0.25, 4, 0.0651041328639114, 1.19183509750137, 0.27939638089783, 0.327070132842064, 39.675, 0.0192375318787289], ["25% to 28%", 0.25, 0.28, 13, 0.0436278493063938, 1.11110828227998, 0.247011103582095, 0.31246882763414, 37.5923076923077, 0.019182861549035], ["28% to 31%", 0.28, 0.31, 21, 0.0297078951494067, 1.07078586742699, 0.233669780699313, 0.293410696297704, 37.5714285714286, 0.0197433542572689], ["31% to 34%", 0.31, 0.34, 7, -0.00424325555139704, 0.992050720306438, 0.211828777580067, 0.291308432628767, 36.1428571428571, 0.0200047796804322], ["34% to 37%", 0.34, 0.37, 4, -0.0941484063901225, 0.820943647808614, 0.215497574259087, 0.261380357347147, 33.85, 0.0216542900327734], ["37% to 60%", 0.37, 0.6, 3, -0.111977083328031, 0.80488904010103, 0.186626926303726, 0.25561523679064, 33.9, 0.0245618369178378]], "catan": [["Denim", -1.43155287765849, 0.0564921959926699, 0.81488524865205, 0.162797976356455, 0.763131057407448, 0.789425660262584, "NO - lift too small", 0, 4, -0.0367781042944106, 0.00519910590111345, -0.041977210195524, -3.6440672378975, "PULL-FORWARD DETECTED", 37117.4905897846], ["Knits", -1.93699339635425, 0.010170116684379, 0.887411345792825, 0.226399478154918, 1.01586246819112, 0.789425660262584, "YES - lift beats break-even", 0.338529906509426, 6, 0.013434195175074, -0.0027495104878496, 0.0161837056629236, 1.7806628742026, "No pull-forward evident", 0], ["Tees", -2.43676547287706, 0.0267108520015561, 0.904333576261042, 0.292707513778213, 1.44940231181038, 0.789425660262584, "YES - lift beats break-even", 0.457316705130185, 5, 0.0207307045365323, -0.00241757535039705, 0.0231482798869294, 2.24164932447989, "No pull-forward evident", 0]], "scen": [["1. Conversion Rate", 0.0184690288655778, 0.0220129480672125, 52, 0.0200244979942817, 0.00187442091086735, 44, 0.0198003644554143, 0.00075182164024349, 8, 0.0212572324580523, 0.00448033084958262, 4, 0.0180334111480728, 4, 0.0244810537680319, 0.598904581204442, 0.290417460928938, 0.326837608763446, 0.0364201478345081], ["2. Average Order Value (AOV)", 82.2990850939527, 96.3778164720017, 52, 88.4131294383441, 4.75262185652223, 44, 88.3551210179862, 3.54026065377566, 8, 88.7321757503126, 9.3507646771707, 4, 80.105016785776, 4, 97.3593347148491, 0.255093133715824, 0.29242648731814, 0.315787963622831, 0.023361476304691], ["3. Customer Lifetime Value (CLV)", 250.236417726887, 332.680104094031, 52, 289.034452770271, 27.6682475861415, 44, 289.268415116897, 20.4722603565662, 8, 287.747659863825, 54.7782476062875, 4, 237.039172302758, 4, 338.456147424892, 0.260081062494888, 0.291305093156972, 0.32195563150926, 0.030650538352288], ["4. Repeat Purchase Rate", 0.263563117044628, 0.324187550502126, 52, 0.295837040019726, 0.0217267627459065, 44, 0.296422408648398, 0.0156018299803833, 8, 0.292617512562027, 0.0439313233601045, 4, 0.252528899297909, 4, 0.332706125826145, 0.281907288129115, 0.292914403978498, 0.313104421990864, 0.0201900180123657], ["5. Profit Margin Impact", 0.194240780074151, 0.283509541342394, 52, 0.233470534304849, 0.0303077818274792, 44, 0.233846835522321, 0.0210245061260812, 8, 0.23140087760875, 0.06301798084861, 4, 0.173316938311007, 4, 0.289484816906492, 0.30630007020115, 0.293774963762256, 0.308371343180196, 0.0145963794179401], ["6. Discount Impact (Net Gross Profit Change)", -0.0994313361824515, 0.0826145680736264, 52, 0.0136387828109989, 0.0617464275161104, 44, 0.0188843864697854, 0.047260087273417, 8, -0.0152120373123266, 0.113724496064024, 4, -0.119928055995398, 4, 0.0895039813707446, 0.23461017625536, 0.292910271425724, 0.313127151031121, 0.0202168796053971], ["7. Break-even Coverage", 0.81536120293696, 1.2145119256883, 52, 1.04502015440951, 0.135750698143335, 44, 1.05061352803514, 0.107925697517885, 8, 1.01425659946856, 0.247856811044477, 4, 0.783914688763358, 4, 1.24459851017377, 0.204971326159004, 0.292910271425724, 0.313127151031121, 0.0202168796053971], ["8. CLV : CAC Ratio", 4.40347429539412, 6.74680618686121, 52, 5.42567664844809, 0.786707810144207, 44, 5.4084211443161, 0.610428879309067, 8, 5.52058192117402, 1.48595346950979, 4, 4.14464754031222, 4, 6.89651630203581, 0.224071667475663, 0.289527313591892, 0.331733419117196, 0.0422061055253042], ["9. Discount Depth (Budget Control)", 0.247902538320828, 0.363330284731057, 52, 0.296020560595785, 0.0386126515651003, 44, 0.29393755477742, 0.0249765405536046, 8, 0.307477092596794, 0.0827839398362783, 4, 0.231032235129959, 4, 0.38392195006363, 0.353151375489078, 0.29393755477742, 0.307477092596794, 0.0135395378193744], ["10. Discount Budget Variance", -0.0529495472472913, 0.0576117930876325, 52, 0.0105714666799424, 0.0459838137962667, 44, 0.0100480112697312, 0.0285570455711461, 8, 0.0134504714361044, 0.101906815611381, 4, -0.0774611325075499, 4, 0.104362075379759, 0.378976139350482, 0.295655066975182, 0.298030775509104, 0.00237570853392272], ["11. Net Promoter Score (NPS)", 33.57, 40.558, 52, 37.0480769230769, 2.36141286925113, 44, 37.0545454545455, 1.72484640980602, 8, 37.0125, 4.72755977525102, 4, 32.625, 4, 41.4, 0.269570166121345, 0.292727436902464, 0.314132740909054, 0.0214053040065902]], "win": [["1. Conversion Rate", 0.4, 0.4, 0.4, 0.125, 0.125, 0.0625, 2.18421781328783, 2.4651445610219, 2.85343072956551, "26-wk"], ["2. Average Order Value (AOV)", 0.2, 0.2, 0.2, 0.0625, 0.0625, 0, -1.47997005430437, -1.38555999191805, -1.38958256062359, "26-wk"], ["3. Customer Lifetime Value (CLV)", 0.3, 0.3, 0.3, 0.0625, 0.125, 0.125, -2.25735731653137, -2.31219966704057, -2.3759544909566, "8-wk"], ["4. Repeat Purchase Rate", 0.8, 0.5, 0.8, 0.0625, 0.0625, 0.0625, -2.46307692000356, -2.37923090566748, -2.45300183456456, "8-wk"], ["5. Profit Margin Impact", 0.3, 0.3, 0.3, 0.0625, 0.0625, 0.0625, -3.70247539742884, -3.11904532906673, -3.13005272357147, "8-wk"], ["6. Discount Impact (Net Gross Profit Change)", 0.6, 0.7, 0.7, 0.0625, 0.0625, 0.0625, -2.88592498780091, -3.59049699020223, -3.17066702235018, "13-wk"], ["7. Break-even Coverage", 0.5, 0.7, 0.6, 0.0625, 0.0625, 0.0625, -2.4148661398883, -3.00987444468274, -2.54480414177456, "13-wk"], ["8. CLV : CAC Ratio", 0.6, 0.1, 0.4, 0.1875, 0.1875, 0.1875, -1.13500345509318, -1.17043099157408, -1.18784271979246, "8-wk"], ["9. Discount Depth (Budget Control)", 0.9, 0.9, 0.8, 0.0625, 0.0625, 0.0625, 4.33041024887288, 4.08542384123964, 3.93946232896813, "8-wk"], ["10. Discount Budget Variance", 0.1, 0.1, 0.1, 0.0625, 0.0625, 0, -1.81463732339365, -1.81870346121698, -1.82267760765319, "26-wk"], ["11. Net Promoter Score (NPS)", 0.2, 0.3, 0.2, 0.125, 0, 0, -1.66213823213154, -1.9811313067363, -1.91960379539216, "13-wk"], ["AVERAGE ACROSS ALL 11 KPIs", 0.445454545454546, 0.409090909090909, 0.436363636363636, 0.0852272727272727, 0.0795454545454545, 0.0625, -1.20916561494682, -1.29237315325851, -1.20011762164956, "26-wk"]], "signoff": [["DR-001", "2026-10-26", "FY26-W40", "Denim / online", "Category promo", 0.25, 0.55, "Merch - Denim", "N", -1.19185186021725, -1.44718444760917, -1.19185186021725, "Light promo - no approval", 0.581364094523463, 0.946050857252938, "FAIL", "[Approver]", "2026-10-27", "Example row", "Approved", 1, -0.0198335694050991, "Approved but fails break-even"], ["DR-002", "2026-10-28", "FY26-W43", "Sitewide / all channels", "Sitewide % off", 0.4, 1.1, "Brand Marketing", "Y", 2.69288523811703, 4.8644078490273, 4.8644078490273, "Pre-approved planned event - confirm GP target", 1.4284534947716, 0.770063571566172, "FAIL", "[Approver]", "2026-10-30", "Black Friday - pre-approved against GP target", "Approved", 2, -0.135252124645892, null], ["DR-003", "2026-10-29", "FY26-W41", "Knits / stores", "Sitewide % off", 0.36, 0.7, "Merch - Knits", "N", 1.65695534522789, 3.18131656992424, 3.18131656992424, "Exceptional - Finance (Company Planning) approval", 1.12491873540247, 0.622267171814465, "FAIL", null, null, "Example row", "Pending", 5, -0.19996940509915, "Overdue - chase approver"], ["DR-004", "2026-10-30", "FY26-W42", "Outerwear / online", "Loyalty offer", 0.3, 0.95, "CRM / Loyalty", "N", 0.103060505894178, 0.656679651269652, 0.656679651269652, "Normal - no approval", 0.789425660262584, 1.20340653695499, "PASS", "[Approver]", "2026-11-02", "Example row", "Approved", 3, 0.0897351274787535, null], ["DR-005", "2026-11-02", "FY26-W44", "Accessories / online", "Clearance markdown", 0.45, 1.2, "Merch - Accessories", "N", 3.98779760422845, 6.96827194790612, 6.96827194790612, "Exceptional - Finance (Company Planning) approval", 1.95632511201373, 0.613394978488409, "FAIL", null, null, "Asked for sell-through forecast", "Needs info", 1, -0.255832861189802, null], ["DR-006", "2026-11-03", "FY26-W42", "Tees / all channels", "BOGO", 0.33, 0.6, "Merch - Tees", "N", 0.880007925561033, 1.91899811059695, 1.91899811059695, "Pricing manager + Merchandise Planning", 0.94279487278271, 0.636405667151188, "FAIL", "[Approver]", "2026-11-03", "Fails break-even", "Rejected", 0, -0.176444192634561, null]], "margin": 0.680023116933154};</script>
+<script>
+/* ===== Discount Pricing Model — app logic (data in window.D) ===== */
+(function(){
+"use strict";
+const D=window.D, W=D.weeks, NK=11;
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pct=(v,d=1)=>v==null||isNaN(v)?'–':(v*100).toFixed(d)+'%';
+const spct=(v,d=1)=>v==null||isNaN(v)?'–':(v>0?'+':v<0?'−':'')+Math.abs(v*100).toFixed(d)+'%';
+const money=(v,d=2)=>v==null||isNaN(v)?'–':'$'+Number(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const num=(v,d=0)=>v==null||isNaN(v)?'–':Number(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const sz=v=>v==null||isNaN(v)?'–':(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(2);
+const SHORT=['Conversion rate','Avg order value','Customer lifetime value','Repeat purchase rate','Profit margin impact','Discount impact (net GP)','Break-even coverage','CLV : CAC','Discount depth','Discount budget variance','Net Promoter Score'];
+const FMT=[v=>pct(v,2),v=>money(v),v=>money(v,0),v=>pct(v),v=>pct(v),v=>spct(v),v=>num(v,2)+'×',v=>num(v,2)+'×',v=>pct(v),v=>spct(v),v=>num(v,1)];
+const AX=[v=>pct(v,1),v=>'$'+num(v),v=>'$'+num(v),v=>pct(v,0),v=>pct(v,0),v=>pct(v,0),v=>num(v,1)+'×',v=>num(v,1)+'×',v=>pct(v,0),v=>pct(v,0),v=>num(v,0)];
+const WHY=['Share of site sessions that place an order.','Net sales per order after discounts.','Margin a customer earns over their lifetime.','Share of customers who buy again within 90 days.','Gross profit after discounts, marketing and ops, as a share of net sales.','Gross-profit change versus the no-promotion baseline. Above 0 = the promotion paid for itself.','Actual volume lift ÷ the lift needed to break even. 1.0× = break-even.','Customer lifetime value ÷ the cost to acquire a customer.','Average discount off ticket price. The core budget-control KPI.','Discount dollars spent versus plan. 0% = on plan.','Brand health: would customers recommend us?'];
+
+/* ---------- settings + storage ---------- */
+const store={get(k,d){try{const v=localStorage.getItem('dpm_'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('dpm_'+k,JSON.stringify(v))}catch(e){}}};
+const S=Object.assign({win:13,k:2,ex:true,kpi:8,cat:'Jeans',lad:'Jeans',tac:'Denim'},store.get('settings',{}));
+const saveS=()=>store.set('settings',{win:S.win,k:S.k,ex:S.ex,kpi:S.kpi,cat:S.cat,lad:S.lad,tac:S.tac});
+
+/* ---------- statistics ---------- */
+function rolling(ki,N=S.win,useEx=S.ex){
+  return W.map((w,i)=>{
+    const prior=[];for(let j=i-1;j>=0&&prior.length<N;j--){if(useEx&&W[j].ex)continue;prior.push(W[j].k[ki])}
+    if(prior.length<3)return{v:w.k[ki],mean:null,sd:null,z:null};
+    const m=prior.reduce((a,b)=>a+b,0)/prior.length;
+    const sd=Math.sqrt(prior.reduce((a,b)=>a+(b-m)*(b-m),0)/(prior.length-1));
+    return{v:w.k[ki],mean:m,sd:sd,z:sd>0?(w.k[ki]-m)/sd:0};
+  });
+}
+function status(z,ki){
+  if(z==null)return{lab:'Not enough history',cls:'na'};
+  const a=Math.abs(z), b=D.better[ki];
+  const fav=b==='Higher'?z>0:b==='Lower'?z<0:false;
+  if(a<=1)return{lab:'In control',cls:'ok'};
+  if(a<=S.k)return{lab:fav?'Watch · favorable':'Watch',cls:fav?'okw':'warn'};
+  return{lab:fav?'Out · favorable':'Out of control',cls:fav?'fav':'bad'};
+}
+function runRules(R,k=S.k){
+  const z=R.map(r=>r.z), f=new Array(R.length).fill('');
+  for(let i=0;i<z.length;i++){
+    if(z[i]==null)continue;
+    if(Math.abs(z[i])>k){f[i]='R1';continue}
+    const side=s=>s>0?1:s<0?-1:0;
+    const win=(n,need,lim)=>{if(i<n-1)return false;for(const sg of[1,-1]){let c=0;for(let j=i-n+1;j<=i;j++)if(z[j]!=null&&side(z[j])===sg&&Math.abs(z[j])>lim)c++;if(c>=need)return true}return false};
+    if(win(3,2,2))f[i]='R2';else if(win(5,4,1))f[i]='R3';
+    else if(i>=7){const s0=side(z[i]);let ok=s0!==0;for(let j=i-7;j<=i&&ok;j++)if(z[j]==null||side(z[j])!==s0)ok=false;if(ok)f[i]='R4'}
+  }
+  return f;
+}
+const latest=W.length-1;
+function depthNorm(){const R=rolling(8);return R[latest]}
+/* elasticity model per category (from workbook fit) */
+const CAT={};D.catan.forEach(r=>CAT[r[0]]={E:r[1],a:r[2],r2:r[3],pfz:r[13],pf:r[14],best:r[8],lost:r[15]});
+const M=D.margin;
+const beLift=(d,m)=>d>=m?Infinity:d/(m-d);
+const gpChange=(d,lift,m)=>(1+lift)*(m-d)/m-1;
+const modelLift=(cat,d)=>{const c=CAT[cat];return Math.exp(c.a)*Math.pow(1-d,c.E)-1};
+const TIERS=[{z:-Infinity,lab:'Light promo · no approval',lvl:0},{z:0,lab:'Normal · no approval',lvl:0},{z:1,lab:'Pricing manager sign-off',lvl:1},{z:1.5,lab:'Pricing manager + Merchandise Planning',lvl:2},{z:2,lab:'Brand Pricing Performance Lead approval',lvl:3},{z:3,lab:'Exceptional · Finance (Company Planning) approval',lvl:4}];
+function tierFor(z,planned){if(planned)return{lab:'Pre-approved planned event · confirm GP target',lvl:-1};let t=TIERS[0];TIERS.forEach(x=>{if(z>=x.z)t=x});return t}
+function depthAtZ(z){const n=depthNorm();return n.mean+z*n.sd}
+
+/* ---------- SVG charts ---------- */
+const NS='http://www.w3.org/2000/svg';
+function niceTicks(lo,hi,n=5){const span=hi-lo||Math.abs(hi)||1;const raw=span/n;const p=Math.pow(10,Math.floor(Math.log10(raw)));const st=[1,2,2.5,5,10].map(x=>x*p).find(x=>x>=raw)||raw;const a=Math.floor(lo/st)*st,b=Math.ceil(hi/st)*st;const t=[];for(let v=a;v<=b+st*1e-9;v+=st)t.push(+v.toFixed(10));return t}
+function chart(el,o){
+  const Wd=o.w||760,H=o.h||300,L=o.l||58,R=16,T=14,B=o.b||46;
+  const n=o.labels.length, iw=Wd-L-R, ih=H-T-B;
+  let vals=[];o.series.forEach(s=>s.data.forEach(v=>{if(v!=null&&isFinite(v))vals.push(v)}));(o.range||[]).forEach(r=>r.forEach(v=>{if(v!=null&&isFinite(v))vals.push(v)}));(o.ref||[]).forEach(r=>vals.push(r.y));
+  if(o.type==='bar')vals.push(0);
+  let lo=Math.min(...vals),hi=Math.max(...vals);if(o.min!=null)lo=Math.min(lo,o.min);if(o.max!=null)hi=Math.max(hi,o.max);
+  const pad=(hi-lo)*0.06||1;if(!(o.type==='bar'&&lo>=0))lo-=pad;hi+=pad;
+  const ticks=niceTicks(lo,hi,o.ticks||5);lo=ticks[0];hi=ticks[ticks.length-1];
+  const y=v=>T+ih-(v-lo)/(hi-lo)*ih;
+  const band=iw/n, x=i=>o.type==='bar'?L+band*i+band/2:L+(n===1?iw/2:i*iw/(n-1));
+  let s=`<svg viewBox="0 0 ${Wd} ${H}" role="img" aria-label="${esc(o.alt||'chart')}" preserveAspectRatio="xMidYMid meet">`;
+  (o.shade||[]).forEach(i=>{const w=o.type==='bar'?band:iw/(n-1||1);s+=`<rect x="${x(i)-w/2}" y="${T}" width="${w}" height="${ih}" class="c-shade"/>`});
+  ticks.forEach(t=>{s+=`<line x1="${L}" x2="${Wd-R}" y1="${y(t)}" y2="${y(t)}" class="c-grid"/><text x="${L-8}" y="${y(t)+4}" text-anchor="end" class="c-ax">${esc(o.yFmt?o.yFmt(t):t)}</text>`});
+  if(o.type==='bar'&&lo<0)s+=`<line x1="${L}" x2="${Wd-R}" y1="${y(0)}" y2="${y(0)}" class="c-zero"/>`;
+  const every=o.every||Math.ceil(n/(o.maxLabels||10));
+  o.labels.forEach((lb,i)=>{if(i%every===0||i===n-1&&o.type==='bar')s+=`<text x="${x(i)}" y="${H-B+18}" text-anchor="middle" class="c-ax">${esc(lb)}</text>`});
+  if(o.xTitle)s+=`<text x="${L+iw/2}" y="${H-6}" text-anchor="middle" class="c-ax c-t">${esc(o.xTitle)}</text>`;
+  if(o.range){const [lo2,hi2]=o.range;let top='',bot='';lo2.forEach((v,i)=>{if(v==null)return;top+=(top?'L':'M')+x(i)+','+y(hi2[i]);});for(let i=n-1;i>=0;i--){if(lo2[i]==null)continue;bot+='L'+x(i)+','+y(lo2[i])}if(top)s+=`<path d="${top}${bot}Z" class="c-range"/>`;
+    [hi2,lo2].forEach(arr=>{let p='';arr.forEach((v,i)=>{if(v==null){return}p+=(p?'L':'M')+x(i)+','+y(v)});s+=`<path d="${p}" class="c-lim"/>`})}
+  (o.ref||[]).forEach(r=>{s+=`<line x1="${L}" x2="${Wd-R}" y1="${y(r.y)}" y2="${y(r.y)}" class="c-ref ${r.cls||''}"/>`+(r.label?`<text x="${Wd-R-4}" y="${y(r.y)-6}" text-anchor="end" class="c-ax c-reft">${esc(r.label)}</text>`:'')});
+  if(o.type==='bar'){const g=o.series.length, bw=Math.min(54,band*0.78/g);
+    o.series.forEach((se,si)=>se.data.forEach((v,i)=>{if(v==null)return;const bx=x(i)-bw*g/2+si*bw, y0=y(Math.max(0,v)), h=Math.abs(y(v)-y(0));const cls=se.clsFn?se.clsFn(v,i):se.cls;s+=`<rect x="${bx+1}" y="${y0}" width="${bw-2}" height="${Math.max(h,1)}" rx="2" class="${cls}"><title>${esc(o.labels[i])}: ${esc((se.fmt||o.yFmt||String)(v))}</title></rect>`;if(o.valLabels)s+=`<text x="${bx+bw/2}" y="${v>=0?y0-6:y0+h+15}" text-anchor="middle" class="c-val">${esc((se.fmt||o.yFmt)(v))}</text>`}));}
+  else o.series.forEach(se=>{let p='';se.data.forEach((v,i)=>{if(v==null)return;p+=(p?'L':'M')+x(i)+','+y(v)});s+=`<path d="${p}" class="${se.cls}"/>`;
+    if(se.dots)se.data.forEach((v,i)=>{if(v==null)return;const c=se.dotCls?se.dotCls(i):'';if(c||se.dots==='all')s+=`<circle cx="${x(i)}" cy="${y(v)}" r="${c?4.5:2.5}" class="${c||'c-dot'}"/>`});});
+  (o.marks||[]).forEach(m=>{s+=`<line x1="${x(m.i)}" x2="${x(m.i)}" y1="${T}" y2="${T+ih}" class="c-mark"/>`+(m.label?`<text x="${x(m.i)+6}" y="${T+14}" class="c-ax c-markt">${esc(m.label)}</text>`:'')});
+  s+=`<line class="c-hover" x1="0" x2="0" y1="${T}" y2="${T+ih}" visibility="hidden"/><rect class="c-hit" x="${L}" y="${T}" width="${iw}" height="${ih}" fill="transparent"/></svg>`;
+  el.innerHTML=`<div class="c-read" aria-live="polite">${esc(o.readDefault||'Hover or tap the chart to read values')}</div>`+s+(o.legend?`<div class="legend">${o.legend.map(l=>`<span><i class="${l.cls}"></i>${esc(l.t)}</span>`).join('')}</div>`:'');
+  const svg=el.querySelector('svg'),hit=svg.querySelector('.c-hit'),hl=svg.querySelector('.c-hover'),rd=el.querySelector('.c-read');
+  const pick=ev=>{const pt=svg.createSVGPoint();pt.x=ev.clientX;pt.y=ev.clientY;const p=pt.matrixTransform(svg.getScreenCTM().inverse());let i=o.type==='bar'?Math.floor((p.x-L)/band):Math.round((p.x-L)/(iw/(n-1||1)));i=Math.max(0,Math.min(n-1,i));hl.setAttribute('x1',x(i));hl.setAttribute('x2',x(i));hl.setAttribute('visibility','visible');rd.innerHTML=o.read?o.read(i):esc(o.labels[i]);if(o.onPick)o.onPick(i)};
+  hit.addEventListener('pointermove',pick);hit.addEventListener('pointerdown',pick);
+  hit.addEventListener('pointerleave',()=>{hl.setAttribute('visibility','hidden')});
+}
+function spark(vals,cls){const n=vals.length,w=120,h=34;const lo=Math.min(...vals),hi=Math.max(...vals);const y=v=>h-3-(v-lo)/((hi-lo)||1)*(h-6);let p='';vals.forEach((v,i)=>p+=(i?'L':'M')+(i*w/(n-1)).toFixed(1)+','+y(v).toFixed(1));return `<svg class="spark ${cls}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><path d="${p}"/><circle cx="${w}" cy="${y(vals[n-1])}" r="3"/></svg>`}
+
+/* ---------- views ---------- */
+const VIEWS=['dashboard','simulator','kpis','pricing','tactics','scenarios','signoff','guide'];
+const VNAME={dashboard:'Dashboard',simulator:'Discount simulator',kpis:'KPI control charts',pricing:'Price position & architecture',tactics:'Tactics & elasticity',scenarios:'Scenarios & windows',signoff:'Sign-off tracker',guide:'How it works'};
+const rendered={};
+function show(v){
+  if(!VIEWS.includes(v))v='dashboard';
+  $$('.view').forEach(s=>s.hidden=s.id!=='v-'+v);
+  $$('.tabs a').forEach(a=>{const on=a.dataset.v===v;a.classList.toggle('on',on);if(on)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+  const i=VIEWS.indexOf(v);
+  $$('.pager').forEach(p=>{const pr=VIEWS[i-1],nx=VIEWS[i+1];p.innerHTML=(pr?`<a class="btn ghost" href="#${pr}">← ${VNAME[pr]}</a>`:'<span></span>')+`<span class="pg-n">${i+1} of ${VIEWS.length}</span>`+(nx?`<a class="btn" href="#${nx}">${VNAME[nx]} →</a>`:`<a class="btn" href="#dashboard">Back to dashboard ↺</a>`)});
+  R[v]();rendered[v]=true;
+  const t=$('.tabs a.on');if(t&&t.scrollIntoView)try{t.scrollIntoView({block:'nearest',inline:'center'})}catch(e){}
+  window.scrollTo(0,0);
+}
+const go=v=>{if(location.hash==='#'+v)show(v);else location.hash=v};
+window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
+
+const R={};
+/* ===== DASHBOARD ===== */
+R.dashboard=function(){
+  const wk=W[latest];
+  $('#d-week').textContent=wk.wk+' · week of '+new Date(wk.start+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  $('#d-set').textContent=`${S.win}-week normal range · ±${S.k} SD · event weeks ${S.ex?'excluded':'included'}`;
+  let cnt={ok:0,warn:0,bad:0},tiles='',att=[];
+  for(let k=0;k<NK;k++){const RR=rolling(k),r=RR[latest],st=status(r.z,k);
+    if(st.cls==='ok')cnt.ok++;else if(st.cls==='bad')cnt.bad++;else cnt.warn++;
+    if(st.cls==='bad')att.push({k,r,st});
+    tiles+=`<button class="tile" data-k="${k}" type="button" aria-label="Open ${esc(SHORT[k])} control chart"><span class="t-name">${esc(SHORT[k])}</span><span class="t-val">${FMT[k](r.v)}</span><span class="t-sub">norm ${r.mean==null?'–':FMT[k](r.mean)} · z ${sz(r.z)}</span><span class="pill ${st.cls}">${st.lab}</span>${spark(W.slice(-26).map(w=>w.k[k]),st.cls)}</button>`}
+  $('#d-tiles').innerHTML=tiles;
+  $('#d-counts').innerHTML=`<span class="pill ok">${cnt.ok} in control</span><span class="pill warn">${cnt.warn} watch</span><span class="pill bad">${cnt.bad} out of control</span>`;
+  $$('#d-tiles .tile').forEach(b=>b.onclick=()=>{S.kpi=+b.dataset.k;saveS();go('kpis')});
+  // hero numbers
+  const n=depthNorm();
+  $('#d-hero').innerHTML=[
+    ['Discount depth',pct(wk.k[8]),`vs ${pct(n.mean)} normal · z ${sz(n.z)}`,n.z>S.k?'bad':'ok'],
+    ['Gross profit vs no promo',spct(wk.k[5]),'this week’s promotion',wk.k[5]<0?'bad':'ok'],
+    ['Break-even coverage',num(wk.k[6],2)+'×','lift ÷ lift needed',wk.k[6]<1?'bad':'ok'],
+    ['Discount budget vs plan',spct(wk.k[9]),'dollars spent vs plan',Math.abs(wk.k[9])>0.05?'warn':'ok']
+  ].map(h=>`<div class="hero-n ${h[3]}"><span class="lab">${h[0]}</span><b>${h[1]}</b><span class="sub">${h[2]}</span></div>`).join('');
+  // depth control chart
+  const RR=rolling(8),rr=runRules(RR);
+  chart($('#d-c1'),{type:'line',h:290,labels:W.map(w=>w.wk.slice(2)),maxLabels:9,alt:'Weekly discount depth with normal range',
+    series:[{data:RR.map(r=>r.mean),cls:'c-mean'},{data:W.map(w=>w.k[8]),cls:'c-line',dots:'all',dotCls:i=>rr[i]?'c-flag':''}],
+    range:[RR.map(r=>r.mean==null?null:r.mean-S.k*r.sd),RR.map(r=>r.mean==null?null:r.mean+S.k*r.sd)],
+    ref:[{y:0.35,label:'35% approval guardrail',cls:'warnl'}],shade:W.map((w,i)=>w.ex?i:-1).filter(i=>i>=0),yFmt:v=>pct(v,0),
+    read:i=>`<b>${W[i].wk}</b> ${pct(W[i].k[8])} off · normal ${RR[i].mean==null?'–':pct(RR[i].mean)} · z ${sz(RR[i].z)}${W[i].ev?' · '+esc(W[i].ev):''}${rr[i]?' · <span class="flagt">'+rr[i]+' signal</span>':''}`,
+    legend:[{cls:'lg-line',t:'Weekly depth'},{cls:'lg-mean',t:`${S.win}-wk mean`},{cls:'lg-range',t:`Normal range (±${S.k} SD)`},{cls:'lg-flag',t:'Run-rule signal'},{cls:'lg-shade',t:'Planned event week'}]});
+  // bands
+  const B=D.bands;
+  chart($('#d-c2'),{type:'bar',h:260,labels:B.map(b=>b[0].replace(' to ','–')),alt:'Gross profit change by discount depth band',series:[{data:B.map(b=>b[4]),clsFn:v=>v>=0?'b-good':'b-bad',fmt:v=>spct(v)}],yFmt:v=>pct(v,0),valLabels:true,
+    read:i=>`<b>${B[i][0]} off</b> · ${B[i][3]} weeks · GP ${spct(B[i][4])} · coverage ${num(B[i][5],2)}× · repeat ${pct(B[i][7])}`});
+  // price index
+  const P=D.pi_sum;
+  chart($('#d-c3'),{type:'bar',h:260,labels:P.map(p=>p[0]),alt:'Price index list vs effective',series:[{data:P.map(p=>p[3]),cls:'b-a',fmt:v=>num(v,0)},{data:P.map(p=>p[6]),cls:'b-b',fmt:v=>num(v,0)}],yFmt:v=>num(v,0),valLabels:true,ref:[{y:100,label:'100 = priced like peers'},{y:120,label:'120 target ceiling',cls:'warnl'}],
+    read:i=>`<b>${P[i][0]}</b> · list index ${num(P[i][3],0)} · effective ${num(P[i][6],0)} · Gap markdown ${pct(P[i][7],0)} vs peers ${pct(P[i][8],0)}`,legend:[{cls:'lg-a',t:'List-price index'},{cls:'lg-b',t:'Effective index (price shown)'}]});
+  // elasticity
+  const cats=['Denim','Knits','Tees'];
+  chart($('#d-c4'),{type:'bar',h:260,labels:cats,alt:'Predicted lift vs break-even at 30% off',series:[{data:cats.map(c=>modelLift(c,0.3)),cls:'b-a',fmt:v=>pct(v,0)},{data:cats.map(()=>beLift(0.3,M)),cls:'b-n',fmt:v=>pct(v,0)}],yFmt:v=>pct(v,0),valLabels:true,
+    read:i=>`<b>${cats[i]}</b> · elasticity ${num(CAT[cats[i]].E,2)} · lift at 30% off ${pct(modelLift(cats[i],0.3),0)} vs ${pct(beLift(0.3,M),0)} needed · ${esc(CAT[cats[i]].pf)}`,legend:[{cls:'lg-a',t:'Predicted unit lift at 30% off'},{cls:'lg-n',t:'Lift needed to break even'}]});
+  // attention
+  $('#d-att').innerHTML=att.length?att.map(a=>`<li><button class="linkbtn" type="button" data-k="${a.k}">${esc(SHORT[a.k])}</button> ${FMT[a.k](a.r.v)} vs ${FMT[a.k](a.r.mean)} normal (z ${sz(a.r.z)})</li>`).join(''):'<li>Nothing is out of control this week.</li>';
+  $$('#d-att .linkbtn').forEach(b=>b.onclick=()=>{S.kpi=+b.dataset.k;saveS();go('kpis')});
+};
+
+/* ===== SIMULATOR ===== */
+const SIM=Object.assign({cat:'Denim',price:79.95,cost:25.58,depth:0.30,base:10000,mode:'model',lift:0.6,planned:false},store.get('sim',{}));
+const PEER={Denim:['Jeans',0],Knits:['Hoodies',2],Tees:['Tees',1]};
+function simCalc(d,s=SIM){
+  const m=(s.price-s.cost)/s.price, lift=s.mode==='model'?modelLift(s.cat,d):s.lift, be=beLift(d,m), gp=gpChange(d,lift,m);
+  const n=depthNorm(), z=(d-n.mean)/n.sd, tier=tierFor(z,s.planned);
+  const units=s.base*(1+lift), rev=units*s.price*(1-d), gpd=units*(s.price*(1-d)-s.cost), bgp=s.base*(s.price-s.cost);
+  return{m,lift,be,gp,cov:be>0?lift/be:Infinity,z,tier,units,rev,gpd,bgp,disc$:units*s.price*d};
+}
+R.simulator=function(){
+  const f=$('#simf');
+  if(!rendered.simulator){
+    f.cat.value=SIM.cat;f.price.value=SIM.price;f.cost.value=SIM.cost;f.depth.value=Math.round(SIM.depth*100);f.base.value=SIM.base;f.lift.value=Math.round(SIM.lift*100);f.planned.checked=SIM.planned;
+    $$('input[name=mode]').forEach(r=>r.checked=r.value===SIM.mode);
+    f.addEventListener('input',simRead);f.addEventListener('change',simRead);f.addEventListener('submit',e=>e.preventDefault());
+    $$('[data-preset]').forEach(b=>b.onclick=()=>{const p=JSON.parse(b.dataset.preset);Object.assign(SIM,p);f.cat.value=SIM.cat;f.price.value=SIM.price;f.cost.value=SIM.cost;f.depth.value=Math.round(SIM.depth*100);f.base.value=SIM.base;$$('input[name=mode]').forEach(r=>r.checked=r.value===SIM.mode);f.lift.value=Math.round(SIM.lift*100);f.planned.checked=SIM.planned;simRead()});
+    $('#sim-send').onclick=()=>{const c=simCalc(SIM.depth);DRAFT={week:'FY26-W46',cat:SIM.cat+' / online',mech:'Category promo',depth:SIM.depth,lift:c.lift,team:'Merch - '+SIM.cat,planned:SIM.planned,notes:`From simulator: ticket ${money(SIM.price)}, cost ${money(SIM.cost)}, ${SIM.mode==='model'?'model lift':'own lift estimate'}`};go('signoff')};
+  }
+  simRead();
+};
+function simRead(){
+  const f=$('#simf');
+  SIM.cat=f.cat.value;SIM.price=Math.max(1,+f.price.value||1);SIM.cost=Math.max(0,Math.min(SIM.price*0.99,+f.cost.value||0));SIM.depth=Math.min(0.7,Math.max(0,(+f.depth.value||0)/100));SIM.base=Math.max(1,+f.base.value||1);
+  SIM.mode=($('input[name=mode]:checked')||{}).value||'model';SIM.lift=(+f.lift.value||0)/100;SIM.planned=f.planned.checked;store.set('sim',SIM);
+  $('#depth-out').textContent=Math.round(SIM.depth*100)+'% off';
+  $('#lift-row').hidden=SIM.mode==='model';
+  const c=simCalc(SIM.depth), cat=CAT[SIM.cat];
+  $('#sim-m').textContent=pct(c.m)+' full-price margin';
+  const verdict = c.tier.lvl===-1 ? (c.gp>=0?['ok','Planned event · profit holds','Pre-approved event. The forecast lift keeps gross profit at or above the no-promotion baseline.']:['warn','Planned event · profit target at risk','Pre-approved event, but the lift does not cover the discount. Confirm the gross-profit target with Finance.'])
+    : c.gp>=0 && c.tier.lvl<=1 ? ['ok','Go','The lift pays for the discount and the depth is inside the normal range.']
+    : c.gp>=0 ? ['warn','Go with sign-off','The lift pays for the discount, but the depth is unusual. Route it to: '+c.tier.lab+'.']
+    : c.tier.lvl<=1 ? ['warn','Rethink the offer','Normal depth, but the lift does not cover the margin given away. Try a shallower depth or a narrower offer.']
+    : ['bad','Do not run as planned','Deep and unprofitable. It needs '+c.tier.lab.toLowerCase()+' and still loses gross profit.'];
+  let pfNote = cat.pf.indexOf('DETECTED')>=0 && SIM.depth>=depthAtZ(1) ? `<p class="note bad">${SIM.cat} shows pull-forward after deep weeks (z ${sz(cat.pfz)}): about ${num(cat.lost,0)} units are lost in the following weeks per deep week, so real profit is lower than shown.</p>`:'';
+  const pp=PEER[SIM.cat], ps=D.pi_sum[pp[1]], peerPaid=ps[5], eff=SIM.price*(1-SIM.depth)/peerPaid*100;
+  $('#sim-out').innerHTML=`<div class="verdict ${verdict[0]}"><span class="lab">Verdict</span><b>${verdict[1]}</b><p>${verdict[2]}</p></div>
+  <div class="kv">
+   <div><span>Predicted unit lift</span><b>${spct(c.lift,0)}</b><em>${SIM.mode==='model'?'elasticity model, E = '+num(cat.E,2):'your estimate'}</em></div>
+   <div><span>Lift needed to break even</span><b>${isFinite(c.be)?spct(c.be,0):'never'}</b><em>depth ÷ (margin − depth)</em></div>
+   <div><span>Break-even coverage</span><b class="${c.cov>=1?'tg':'tb'}">${isFinite(c.cov)?num(c.cov,2)+'×':'–'}</b><em>1.0× = pays for itself</em></div>
+   <div><span>Gross profit vs no promo</span><b class="${c.gp>=0?'tg':'tb'}">${spct(c.gp)}</b><em>${money(c.gpd-c.bgp,0)} on ${num(SIM.base)} baseline units</em></div>
+   <div><span>Depth vs normal weeks</span><b>z ${sz(c.z)}</b><em>normal ${pct(depthNorm().mean)} ± ${pct(depthNorm().sd)}</em></div>
+   <div><span>Approval needed</span><b class="sm">${esc(c.tier.lab)}</b><em>from the z-score ladder</em></div>
+   <div><span>Price shown vs ${pp[0].toLowerCase()} peers</span><b>${num(eff,0)}</b><em>index; peers sell at ${money(peerPaid)}</em></div>
+   <div><span>Units · revenue · discount $</span><b class="sm">${num(c.units)} · ${money(c.rev,0)} · ${money(c.disc$,0)}</b><em>at ${money(SIM.price*(1-SIM.depth))} paid</em></div>
+  </div>${pfNote}`;
+  // curve over depth 0..60
+  const ds=[];for(let d=0;d<=0.6001;d+=0.02)ds.push(+d.toFixed(2));
+  const gpc=ds.map(d=>simCalc(d).gp), bi=Math.round(SIM.depth/0.02);
+  let best=0;gpc.forEach((v,i)=>{if(v>gpc[best])best=i});
+  chart($('#sim-c'),{type:'line',h:280,labels:ds.map(d=>Math.round(d*100)+'%'),maxLabels:8,alt:'Gross profit change across discount depths',xTitle:'Discount depth',series:[{data:gpc,cls:'c-line',dots:'all',dotCls:i=>i===bi?'c-flag':''}],ref:[{y:0,label:'no-promo gross profit'}],yFmt:v=>pct(v,0),
+    marks:[{i:best,label:'most profitable: '+ds[best]*100+'%'}],shade:ds.map((d,i)=>d>=depthAtZ(S.k)?i:-1).filter(i=>i>=0),
+    read:i=>{const x=simCalc(ds[i]);return `<b>${Math.round(ds[i]*100)}% off</b> · lift ${spct(x.lift,0)} · break-even ${isFinite(x.be)?spct(x.be,0):'–'} · GP ${spct(x.gp)} · ${esc(x.tier.lab)}`},
+    legend:[{cls:'lg-line',t:'Gross-profit change vs no promotion'},{cls:'lg-flag',t:'Your depth'},{cls:'lg-shade',t:'Outside the normal range'}]});
+  // outcome table
+  const rows=[0.1,0.2,0.25,0.3,0.35,0.4,0.5].map(d=>{const x=simCalc(d);return `<tr class="${Math.abs(d-SIM.depth)<0.005?'cur':''}"><td>${Math.round(d*100)}%</td><td>${spct(x.lift,0)}</td><td>${isFinite(x.be)?spct(x.be,0):'–'}</td><td class="${x.cov>=1?'tg':'tb'}">${isFinite(x.cov)?num(x.cov,2)+'×':'–'}</td><td class="${x.gp>=0?'tg':'tb'}">${spct(x.gp)}</td><td>${sz(x.z)}</td><td>${esc(x.tier.lab)}</td></tr>`}).join('');
+  $('#sim-t').innerHTML=`<table><thead><tr><th>Depth</th><th>Lift</th><th>Break-even</th><th>Coverage</th><th>GP vs no promo</th><th>z</th><th>Approval</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+/* ===== KPI CONTROL CHARTS ===== */
+R.kpis=function(){
+  if(!rendered.kpis){
+    $('#k-sel').innerHTML=D.kpiNames.map((n,i)=>`<option value="${i}">${esc(n)}</option>`).join('');
+    $('#k-sel').onchange=e=>{S.kpi=+e.target.value;saveS();R.kpis()};
+    $$('#k-win button').forEach(b=>b.onclick=()=>{S.win=+b.dataset.w;saveS();R.kpis()});
+    $$('#k-k button').forEach(b=>b.onclick=()=>{S.k=+b.dataset.k;saveS();R.kpis()});
+    $('#k-ex').onchange=e=>{S.ex=e.target.checked;saveS();R.kpis()};
+    $('#k-prev').onclick=()=>{S.kpi=(S.kpi+NK-1)%NK;saveS();R.kpis()};$('#k-next').onclick=()=>{S.kpi=(S.kpi+1)%NK;saveS();R.kpis()};
+  }
+  $('#k-sel').value=S.kpi;$('#k-ex').checked=S.ex;
+  $$('#k-win button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.w===S.win));$$('#k-k button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.k===S.k));
+  const k=S.kpi,RR=rolling(k),rr=runRules(RR),r=RR[latest],st=status(r.z,k);
+  $('#k-why').innerHTML=`<b>${esc(D.kpiNames[k])}</b> · ${esc(WHY[k])} Better when <b>${esc(D.better[k].toLowerCase())}</b>.`;
+  chart($('#k-c'),{type:'line',h:320,labels:W.map(w=>w.wk.slice(2)),maxLabels:9,alt:D.kpiNames[k]+' control chart',
+    series:[{data:RR.map(x=>x.mean),cls:'c-mean'},{data:W.map(w=>w.k[k]),cls:'c-line',dots:'all',dotCls:i=>rr[i]?'c-flag':''}],
+    range:[RR.map(x=>x.mean==null?null:x.mean-S.k*x.sd),RR.map(x=>x.mean==null?null:x.mean+S.k*x.sd)],
+    ref:D.target[k]!=null&&typeof D.target[k]==='number'?[{y:D.target[k],label:'target '+FMT[k](D.target[k]),cls:'tgl'}]:[],shade:W.map((w,i)=>w.ex?i:-1).filter(i=>i>=0),yFmt:AX[k],
+    read:i=>`<b>${W[i].wk}</b> ${FMT[k](W[i].k[k])} · normal ${RR[i].mean==null?'–':FMT[k](RR[i].mean)} · z ${sz(RR[i].z)}${W[i].ev?' · '+esc(W[i].ev):''}${rr[i]?' · <span class="flagt">'+rr[i]+'</span>':''}`,
+    legend:[{cls:'lg-line',t:'Weekly value'},{cls:'lg-mean',t:`${S.win}-wk mean`},{cls:'lg-range',t:`Normal range ±${S.k} SD`},{cls:'lg-tg',t:'Target'},{cls:'lg-flag',t:'Run-rule signal'},{cls:'lg-shade',t:'Event week'}]});
+  const fl=rr.filter(Boolean).length, flags={R1:0,R2:0,R3:0,R4:0};rr.forEach(f=>{if(f)flags[f]++});
+  $('#k-stats').innerHTML=`<div><span>Latest (${W[latest].wk})</span><b>${FMT[k](r.v)}</b></div><div><span>${S.win}-wk normal</span><b>${FMT[k](r.mean)}</b></div><div><span>Std deviation</span><b>${FMT[k](r.sd).replace(/^[+−]/,'')}</b></div><div><span>Normal range</span><b class="sm">${FMT[k](r.mean-S.k*r.sd)} to ${FMT[k](r.mean+S.k*r.sd)}</b></div><div><span>Latest z</span><b>${sz(r.z)}</b></div><div><span>Status</span><b><span class="pill ${st.cls}">${st.lab}</span></b></div><div><span>Benchmark · target</span><b class="sm">${D.bench[k]==null?'n/a':FMT[k](D.bench[k])} · ${FMT[k](D.target[k])}</b></div><div><span>Signal weeks</span><b class="sm">${fl} (R1 ${flags.R1} · R2 ${flags.R2} · R3 ${flags.R3} · R4 ${flags.R4})</b></div>`;
+  let t='';for(let i=0;i<NK;i++){const x=rolling(i)[latest],s2=status(x.z,i);t+=`<tr class="${i===k?'cur':''}"><td><button class="linkbtn" type="button" data-k="${i}">${esc(SHORT[i])}</button></td><td>${FMT[i](x.v)}</td><td>${FMT[i](x.mean)}</td><td>${sz(x.z)}</td><td><span class="pill ${s2.cls}">${s2.lab}</span></td></tr>`}
+  $('#k-all').innerHTML=`<table><thead><tr><th>KPI</th><th>Latest</th><th>${S.win}-wk normal</th><th>z</th><th>Status</th></tr></thead><tbody>${t}</tbody></table>`;
+  $$('#k-all .linkbtn').forEach(b=>b.onclick=()=>{S.kpi=+b.dataset.k;saveS();R.kpis();$('#k-c').scrollIntoView({behavior:'smooth',block:'center'})});
+};
+
+/* ===== PRICING ===== */
+R.pricing=function(){
+  if(!rendered.pricing){
+    $$('#p-cat button').forEach(b=>b.onclick=()=>{S.cat=b.dataset.c;saveS();R.pricing()});
+    $$('#l-cat button').forEach(b=>b.onclick=()=>{S.lad=b.dataset.c;saveS();R.pricing()});
+  }
+  $$('#p-cat button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.c===S.cat));$$('#l-cat button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.c===S.lad));
+  const rows=D.pi_rows.filter(r=>r[0]===S.cat&&r[3]>0);
+  chart($('#p-c'),{type:'bar',h:280,labels:rows.map(r=>r[1]),alt:S.cat+' list vs price shown by brand',series:[{data:rows.map(r=>r[4]),cls:'b-a',fmt:v=>money(v)},{data:rows.map(r=>r[5]||null),cls:'b-b',fmt:v=>money(v)}],yFmt:v=>'$'+num(v),valLabels:true,
+    read:i=>`<b>${esc(rows[i][1])}</b> · ${rows[i][3]} listings · list ${money(rows[i][4])} · shown ${rows[i][5]?money(rows[i][5]):'–'} · markdown ${rows[i][6]!=null?pct(rows[i][6],0):'–'}`,legend:[{cls:'lg-a',t:'Average list (ticket) price'},{cls:'lg-b',t:'Average price shown on the day'}]});
+  const s=D.pi_sum.find(p=>p[0]===S.cat);
+  $('#p-sum').innerHTML=`<div class="kv k4"><div><span>List-price index</span><b class="${s[3]>120?'tb':'tg'}">${num(s[3],0)}</b><em>Gap ÷ peers × 100</em></div><div><span>Effective index</span><b>${num(s[6],0)}</b><em>after markdowns</em></div><div><span>Gap markdown</span><b>${pct(s[7],0)}</b><em>peers ${pct(s[8],0)}</em></div><div><span>Price realized</span><b>${pct(s[4]/s[1],0)}</b><em>of ticket</em></div></div><p class="rec"><b>${esc(s[10])}.</b> ${esc(s[11])}</p>`;
+  const L=D.ladder.filter(r=>r[0]===S.lad).sort((a,b)=>a[2]-b[2]);
+  chart($('#l-c'),{type:'bar',h:270,labels:L.map(r=>'$'+(r[2]%1?r[2].toFixed(2):r[2])),alt:S.lad+' price ladder',series:[{data:L.map(r=>r[3]),clsFn:(v,i)=>L[i][1]==='Mainline'?(/Compressed|Overlap|close/.test(L[i][6])?'b-warn':'b-a'):'b-b',fmt:v=>num(v)}],yFmt:v=>num(v),valLabels:true,maxLabels:14,
+    read:i=>`<b>${money(L[i][2])} · ${esc(L[i][1])}</b> · ${L[i][3]} listings (${pct(L[i][4],0)}) · step-up ${typeof L[i][5]==='number'?spct(L[i][5],0):esc(L[i][5])} · ${esc(L[i][6])}${L[i][7]!=null?' · markdown '+pct(L[i][7],0):''}`,
+    legend:[{cls:'lg-a',t:'Mainline price point'},{cls:'lg-warn',t:'Mainline step too small'},{cls:'lg-b',t:'Premium / collaboration'}]});
+  const ls=D.ladder_sum.find(r=>r[0]===S.lad);
+  $('#l-sum').innerHTML=`<div class="kv k4"><div><span>Mainline price points</span><b>${ls[1]}</b><em>${money(ls[2])} to ${money(ls[3])}</em></div><div><span>Biggest share at one price</span><b class="${ls[5]>0.5?'tb':''}">${pct(ls[5],0)}</b><em>over 50% = crowded</em></div><div><span>Compressed steps</span><b>${ls[6]}</b><em>under 10% apart</em></div><div><span>Premium/collab overlaps</span><b>${ls[8]}</b><em>blur good-better-best</em></div></div><p class="rec"><b>${esc(ls[9])}.</b> ${esc(ls[10])}</p>`;
+};
+
+/* ===== TACTICS ===== */
+R.tactics=function(){
+  if(!rendered.tactics)$$('#t-cat button').forEach(b=>b.onclick=()=>{S.tac=b.dataset.c;saveS();R.tactics()});
+  $$('#t-cat button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.c===S.tac));
+  const B=D.bands;
+  $('#t-bands').innerHTML=`<table><thead><tr><th>Depth band</th><th>Weeks</th><th>GP vs no promo</th><th>Coverage</th><th>Profit margin</th><th>Repeat rate</th><th>NPS</th><th>Conversion</th></tr></thead><tbody>${B.map(b=>`<tr><td>${esc(b[0])}</td><td>${b[3]}</td><td class="${b[4]>=0?'tg':'tb'}">${spct(b[4])}</td><td class="${b[5]>=1?'tg':'tb'}">${num(b[5],2)}×</td><td>${pct(b[6])}</td><td>${pct(b[7])}</td><td>${num(b[8],1)}</td><td>${pct(b[9],2)}</td></tr>`).join('')}</tbody></table>`;
+  const c=S.tac,cat=CAT[c],ds=[];for(let d=0;d<=0.6001;d+=0.02)ds.push(+d.toFixed(2));
+  chart($('#t-c'),{type:'line',h:290,labels:ds.map(d=>Math.round(d*100)+'%'),maxLabels:8,xTitle:'Discount depth',alt:c+' predicted lift vs break-even',series:[{data:ds.map(d=>beLift(d,M)>3?null:beLift(d,M)),cls:'c-be'},{data:ds.map(d=>modelLift(c,d)),cls:'c-line'}],yFmt:v=>pct(v,0),
+    marks:cat.best>0?[{i:Math.round(cat.best/0.02),label:'profit peak '+pct(cat.best,0)}]:[],
+    read:i=>{const d=ds[i],l=modelLift(c,d),b=beLift(d,M);return `<b>${Math.round(d*100)}% off</b> · predicted lift ${spct(l,0)} · needed ${spct(b,0)} · GP ${spct(gpChange(d,l,M))}`},
+    legend:[{cls:'lg-line',t:'Predicted unit lift (elasticity model)'},{cls:'lg-be',t:'Lift needed to break even'}]});
+  $('#t-sum').innerHTML=`<div class="kv k4"><div><span>Price elasticity</span><b>${num(cat.E,2)}</b><em>R² ${num(cat.r2,2)}</em></div><div><span>10% lower price →</span><b>${spct(Math.pow(0.9,cat.E)-1,0)}</b><em>more units</em></div><div><span>Most profitable depth</span><b>${cat.best>0?pct(cat.best,0):'no discount'}</b><em>model ceiling</em></div><div><span>Pull-forward</span><b class="${cat.pfz<=-2?'tb':'tg'}">z ${sz(cat.pfz)}</b><em>${esc(cat.pf.toLowerCase())}</em></div></div>`;
+  const cats=['Denim','Knits','Tees'];
+  chart($('#t-pf'),{type:'bar',h:230,labels:cats,alt:'Pull-forward z by category',series:[{data:cats.map(x=>CAT[x].pfz),clsFn:v=>v<=-2?'b-bad':'b-n',fmt:v=>sz(v)}],yFmt:v=>num(v,1),valLabels:true,ref:[{y:-2,label:'−2 = pull-forward detected',cls:'warnl'}],
+    read:i=>`<b>${cats[i]}</b> · z ${sz(CAT[cats[i]].pfz)} · ${esc(CAT[cats[i]].pf)}${CAT[cats[i]].lost?' · ~'+num(CAT[cats[i]].lost)+' units lost per deep week':''}`});
+};
+
+/* ===== SCENARIOS ===== */
+R.scenarios=function(){
+  const Sc=D.scen;
+  chart($('#s-c'),{type:'bar',h:300,labels:Sc.map((s,i)=>String(i+1)),alt:'How much outliers inflate each KPI standard deviation',series:[{data:Sc.map(s=>s[16]),cls:'b-a',fmt:v=>pct(v,0)}],yFmt:v=>pct(v,0),valLabels:true,
+    read:i=>`<b>${esc(Sc[i][0])}</b> · all-week SD ${FMT[i](Sc[i][5]).replace(/^[+−]/,'')} · middle 86% SD ${FMT[i](Sc[i][8]).replace(/^[+−]/,'')} · removing the 14% outliers cuts SD by ${pct(Sc[i][16],0)}`,readDefault:'Bars are numbered by KPI (see table). Hover or tap a bar.'});
+  $('#s-t').innerHTML=`<table><thead><tr><th>#</th><th>KPI</th><th>Middle 86% mean</th><th>Outlier 14% mean</th><th>Low tail mean</th><th>High tail mean</th><th>SD cut</th><th>Depth: middle vs outlier weeks</th></tr></thead><tbody>${Sc.map((s,i)=>`<tr><td>${i+1}</td><td>${esc(SHORT[i])}</td><td>${FMT[i](s[7])}</td><td>${FMT[i](s[10])}</td><td>${FMT[i](s[13])}</td><td>${FMT[i](s[15])}</td><td>${pct(s[16],0)}</td><td>${pct(s[17])} vs ${pct(s[18])}</td></tr>`).join('')}</tbody></table>`;
+  const Wn=D.win[11];
+  chart($('#s-w'),{type:'bar',h:250,labels:['8-week','13-week','26-week'],alt:'Window comparison',series:[{data:[Wn[1],Wn[2],Wn[3]],cls:'b-a',fmt:v=>pct(v,0)},{data:[Wn[4],Wn[5],Wn[6]],cls:'b-bad',fmt:v=>pct(v,1)}],yFmt:v=>pct(v,0),valLabels:true,
+    read:i=>`<b>${['8','13','26'][i]}-week window</b> · catches ${pct(Wn[1+i],0)} of event weeks · false alarms in ${pct(Wn[4+i],1)} of normal weeks`,legend:[{cls:'lg-a',t:'Event weeks caught'},{cls:'lg-bad',t:'False alarms in normal weeks'}]});
+};
+
+/* ===== SIGN-OFF ===== */
+let DRAFT=null;
+const seed=()=>D.signoff.map(r=>({id:r[0],date:r[1],week:r[2],cat:r[3],mech:r[4],depth:r[5],lift:r[6],team:r[7],planned:r[8]==='Y',decision:r[19],notes:r[18]==='Example row'?'Example request':r[18],example:true}));
+let LOG=store.get('log',null)||seed();
+const saveLog=()=>store.set('log',LOG);
+function score(q){const n=depthNorm(),z=(q.depth-n.mean)/n.sd,t=tierFor(z,q.planned),be=beLift(q.depth,M),cov=q.lift/be,gp=gpChange(q.depth,q.lift,M);return{z,t,be,cov,gp,pass:cov>=1}}
+R.signoff=function(){
+  const f=$('#sof');
+  if(!rendered.signoff){
+    f.addEventListener('input',soLive);f.addEventListener('change',soLive);
+    f.addEventListener('submit',e=>{e.preventDefault();const q=soRead();if(!q.week||!q.cat||!(q.depth>0)){$('#so-msg').textContent='Add a fiscal week, a category and a discount depth above 0%.';return}
+      const id='DR-'+String(LOG.reduce((m,r)=>Math.max(m,parseInt(String(r.id).slice(3))||0),0)+1).padStart(3,'0');
+      LOG.unshift(Object.assign(q,{id,date:new Date().toISOString().slice(0,10),decision:'Pending'}));saveLog();soTable();$('#so-msg').textContent=id+' added as Pending.';f.notes.value=''});
+    $('#so-filter').onchange=soTable;
+    $('#so-reset').onclick=()=>{const b=$('#so-reset');if(b.dataset.armed){LOG=seed();saveLog();soTable();b.textContent='Reset to examples';delete b.dataset.armed;$('#so-msg').textContent='Log reset to the 6 example requests.'}else{b.dataset.armed='1';b.textContent='Click again to confirm reset';setTimeout(()=>{if(b.dataset.armed){delete b.dataset.armed;b.textContent='Reset to examples'}},4000)}};
+    $('#so-copy').onclick=()=>{const head='ID,Date,Week,Category,Mechanism,Depth,Lift,Team,Planned,z,Approval,Break-even,Coverage,GP change,Decision,Notes';const csv=[head].concat(LOG.map(r=>{const s=score(r);return[r.id,r.date,r.week,r.cat,r.mech,pct(r.depth),pct(r.lift),r.team,r.planned?'Y':'N',s.z.toFixed(2),s.t.lab,pct(s.be),s.cov.toFixed(2),pct(s.gp),r.decision,r.notes].map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"').join(',')})).join('\n');
+      const ok=()=>$('#so-msg').textContent='Copied '+LOG.length+' rows as CSV. Paste into Excel.';const ta=$('#so-csv');
+      const fb=()=>{ta.hidden=false;ta.value=csv;ta.select();$('#so-msg').textContent='Copy blocked here: the CSV is selected below, press Ctrl/Cmd + C.'};
+      try{navigator.clipboard.writeText(csv).then(ok,fb)}catch(e){fb()}};
+    $('#so-ladder').innerHTML=TIERS.map((t,i)=>`<div class="rung r${t.lvl}"><span class="z">z ≥ ${t.z===-Infinity?'−∞':sz(t.z).replace('+','+')}</span><b>${i===0?'below '+pct(depthAtZ(0)):'from '+pct(depthAtZ(t.z))}</b><span>${esc(t.lab)}</span></div>`).join('');
+  }
+  if(DRAFT){f.week.value=DRAFT.week;f.cat.value=DRAFT.cat;f.mech.value=DRAFT.mech;f.depth.value=(DRAFT.depth*100).toFixed(0);f.lift.value=(DRAFT.lift*100).toFixed(0);f.team.value=DRAFT.team;f.planned.checked=DRAFT.planned;f.notes.value=DRAFT.notes;DRAFT=null;$('#so-msg').textContent='Filled from the simulator. Review and submit.'}
+  soLive();soTable();
+};
+function soRead(){const f=$('#sof');return{week:f.week.value.trim(),cat:f.cat.value.trim(),mech:f.mech.value,depth:(+f.depth.value||0)/100,lift:(+f.lift.value||0)/100,team:f.team.value.trim(),planned:f.planned.checked,notes:f.notes.value.trim()}}
+function soLive(){const q=soRead();if(!(q.depth>0)){$('#so-live').innerHTML='Enter a discount depth to see its approval tier and break-even test.';return}
+  const s=score(q);$('#so-live').innerHTML=`<span class="pill ${s.t.lvl>=3?'bad':s.t.lvl>=1?'warn':'ok'}">${esc(s.t.lab)}</span> z ${sz(s.z)} · break-even lift ${pct(s.be,0)} · your lift covers <b class="${s.pass?'tg':'tb'}">${num(s.cov,2)}×</b> (${s.pass?'passes':'fails'} break-even) · gross profit ${spct(s.gp)} vs no promo`}
+function soTable(){
+  const fl=$('#so-filter').value;const c={all:LOG.length,Pending:0,Approved:0,Rejected:0,'Needs info':0,fail:0};
+  LOG.forEach(r=>{c[r.decision]=(c[r.decision]||0)+1;if(r.decision==='Approved'&&!score(r).pass)c.fail++});
+  $('#so-counts').innerHTML=`<div><b>${c.all}</b><span>Requests</span></div><div><b>${c.Pending}</b><span>Pending</span></div><div><b>${c.Approved}</b><span>Approved</span></div><div><b>${c.Rejected}</b><span>Rejected</span></div><div><b>${c['Needs info']}</b><span>Needs info</span></div><div class="${c.fail?'bad':''}"><b>${c.fail}</b><span>Approved, fails break-even</span></div>`;
+  const rows=LOG.filter(r=>fl==='all'||r.decision===fl);
+  $('#so-t').innerHTML=rows.length?`<table><thead><tr><th>ID</th><th>Week · category</th><th>Depth</th><th>Lift</th><th>z</th><th>Approval needed</th><th>Break-even</th><th>GP</th><th>Decision</th></tr></thead><tbody>${rows.map(r=>{const s=score(r);return `<tr><td>${esc(r.id)}${r.example?'<br><small>example</small>':''}</td><td>${esc(r.week)}<br><small>${esc(r.cat)} · ${esc(r.mech)}</small></td><td>${pct(r.depth,0)}</td><td>${pct(r.lift,0)}</td><td>${sz(s.z)}</td><td><small>${esc(s.t.lab)}</small></td><td class="${s.pass?'tg':'tb'}">${s.pass?'Pass':'Fail'} ${num(s.cov,2)}×</td><td class="${s.gp>=0?'tg':'tb'}">${spct(s.gp)}</td><td><select data-id="${esc(r.id)}" aria-label="Decision for ${esc(r.id)}">${['Pending','Approved','Rejected','Needs info'].map(o=>`<option${o===r.decision?' selected':''}>${o}</option>`).join('')}</select></td></tr>`}).join('')}</tbody></table>`:'<p class="empty">No requests match this filter.</p>';
+  $$('#so-t select').forEach(s=>s.onchange=()=>{const r=LOG.find(x=>x.id===s.dataset.id);r.decision=s.value;saveLog();soTable();$('#so-msg').textContent=r.id+' marked '+s.value+'.'});
+}
+R.guide=function(){};
+
+/* ---------- boot ---------- */
+$$('[data-go]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.go)));
+$('#theme').onclick=()=>{const r=document.documentElement,cur=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'),nx=cur==='dark'?'light':'dark';r.setAttribute('data-theme',nx);store.set('theme',nx);$('#theme').textContent=nx==='dark'?'Light mode':'Dark mode'};
+(function(){const t=store.get('theme',null);if(t)document.documentElement.setAttribute('data-theme',t);const cur=document.documentElement.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');$('#theme').textContent=cur==='dark'?'Light mode':'Dark mode'})();
+let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{const v=location.hash.slice(1)||'dashboard';if(R[VIEWS.includes(v)?v:'dashboard'])R[VIEWS.includes(v)?v:'dashboard']()},250)});
+show(location.hash.slice(1)||'dashboard');
+window.__DPM={rolling,simCalc,score,modelLift};
+})();
+
+</script>
+</body>
+</html>
